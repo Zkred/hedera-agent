@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
-import { HederaAgentService } from "./services/hederaAgent";
+
 import {
   MessageRequest,
   MessageResponse,
@@ -12,6 +12,7 @@ import {
 
 // A2A imports
 import { hederaAgentCard } from "./agentCard";
+import { HederaAgentService } from "./services/hederaAgent";
 
 // Initialize the agent service
 const agentService = new HederaAgentService();

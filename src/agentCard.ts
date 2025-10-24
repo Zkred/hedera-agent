@@ -2,9 +2,9 @@
 import type { AgentCard } from "@a2a-js/sdk";
 
 export const hederaAgentCard: AgentCard = {
-  name: "Hedera Network Agent",
+  name: "Zkred Wiki Agent",
   description:
-    "A specialized agent that can interact with the Hedera network, generate DIDs, and perform blockchain operations using the Hedera Agent Kit.",
+    "A specialized agent that can interact with the Hedera network, generate DIDs, perform blockchain operations using the Hedera Agent Kit, and conduct research using Wikipedia.",
   protocolVersion: "0.3.0",
   version: "1.0.0",
   url: process.env.AGENT_URL || "http://localhost:3000/",
@@ -22,6 +22,13 @@ export const hederaAgentCard: AgentCard = {
       description:
         "Generate decentralized identifiers using Zkred Agent ID plugin for identity management",
       tags: ["did", "identity", "ssi", "privacy"],
+    },
+    {
+      id: "research",
+      name: "Wiki Tool",
+      description:
+        "Conduct research using Wikipedia and provide information on various topics",
+      tags: ["research", "wikipedia", "information", "knowledge"],
     },
     {
       id: "chat",

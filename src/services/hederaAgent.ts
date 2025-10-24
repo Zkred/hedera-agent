@@ -8,6 +8,7 @@ const { zkredAgentIdPlugin } = require("@zkred/hedera-agentid-plugin");
 const { createAgent } = require("langchain");
 const { SystemMessage, HumanMessage } = require("@langchain/core/messages");
 import { AgentResponse } from "../types";
+import { wikipediaTool } from "../tools/wikitool";
 
 export class HederaAgentService {
   private agent: any;
@@ -36,14 +37,20 @@ export class HederaAgentService {
       });
 
       // Fetch tools from toolkit
-      const tools = hederaAgentToolkit.getTools();
+      const hederaTools = hederaAgentToolkit.getTools();
+
+      // Add custom tools
+      const customTools = [wikipediaTool];
+
+      // Combine all tools
+      const tools = [...hederaTools, ...customTools];
 
       // Create the agent using the new LangChain v1.0.1 API
       this.agent = createAgent({
         model: llm,
         tools,
         systemPrompt:
-          "You are a helpful assistant that can interact with the Hedera network.",
+          "You are a helpful assistant that can interact with the Hedera network and perform research using Wikipedia. You can help with blockchain operations, DID generation, and general research tasks.",
       });
 
       this.isInitialized = true;
@@ -66,7 +73,7 @@ export class HederaAgentService {
     const response = await this.agent.invoke({
       messages: [
         new SystemMessage(
-          "You are a helpful assistant that can interact with the Hedera network."
+          "You are a helpful assistant that can interact with the Hedera network and perform research using Wikipedia. You can help with blockchain operations, DID generation, and general research tasks."
         ),
         new HumanMessage(message),
       ],
