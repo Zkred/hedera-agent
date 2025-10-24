@@ -1,0 +1,29 @@
+{
+  "dependencies": {
+    "@hashgraph/sdk": "^2.75.0",
+    "@langchain/core": "^1.0.1",
+    "@langchain/openai": "^1.0.0",
+    "dotenv": "^17.2.3",
+    "hedera-agent-kit": "^3.4.0",
+    "langchain": "^1.0.1"
+  },
+  "name": "hedera-agent-ethonline",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zkred/hedera-agent-ethonline.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Zkred/hedera-agent-ethonline/issues"
+  },
+  "homepage": "https://github.com/Zkred/hedera-agent-ethonline#readme",
+  "description": ""
+}
