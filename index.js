@@ -7,6 +7,7 @@ const { createAgent } = require('langchain');
 const { Client, PrivateKey } = require('@hashgraph/sdk');
 const { HederaLangchainToolkit, coreQueriesPlugin } = require('hedera-agent-kit');
 const { ChatOpenAI } = require('@langchain/openai');
+const { zkredAgentIdPlugin } = require("@zkred/hedera-agentid-plugin");
 
 // Choose your AI provider (install the one you want to use)
 function createLLM() {
@@ -27,7 +28,7 @@ async function main() {
   const hederaAgentToolkit = new HederaLangchainToolkit({
     client,
     configuration: {
-      plugins: [coreQueriesPlugin] // all our core plugins here https://github.com/hedera-dev/hedera-agent-kit/tree/main/typescript/src/plugins
+      plugins: [coreQueriesPlugin, zkredAgentIdPlugin] // all our core plugins here https://github.com/hedera-dev/hedera-agent-kit/tree/main/typescript/src/plugins
     },
   });
   
@@ -43,7 +44,7 @@ async function main() {
   
   // Invoke the agent directly
   const response = await agent.invoke({ 
-    messages: [{ role: 'user', content: "what's my balance?" }] 
+    messages: [{ role: 'user', content: "generate an agent DID for my account: 0xfd885bf080abffe1dcde1f88782fc4007b5207e5 for Privado Main" }] 
   });
   console.log(response);
 }
