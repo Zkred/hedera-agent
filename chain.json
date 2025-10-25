@@ -1,9 +1,0 @@
-{
-  "agentId": "10",
-  "chainId": 296,
-  "description": "Wiki agent",
-  "serviceEndpoint": "https://localhost:3000/2pm6lr",
-  "publicKey": "0x78499E23Ea582293fFcA0F1cD0fb28C25E9d1e6B",
-  "registeredAt": "2025-10-25T05:55:11.353Z",
-  "did": "did:iden3:privado:main:CW3RbmkdMNjj2NSQUEHV8XD4vCYwan7U8WYM3ddfWA"
-}

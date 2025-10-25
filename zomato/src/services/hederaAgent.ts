@@ -4,7 +4,7 @@ const {
   coreQueriesPlugin,
 } = require("hedera-agent-kit");
 const { ChatOpenAI } = require("@langchain/openai");
-const { zkredAgentIdPlugin } = require("../../../hedera-plugin/dist/index");
+const { zkredAgentIdPlugin } = require("@zkred/hedera-agentid-plugin");
 const { createAgent } = require("langchain");
 const { SystemMessage, HumanMessage } = require("@langchain/core/messages");
 import { AgentResponse } from "../types";
@@ -81,7 +81,10 @@ export class HederaAgentService {
       console.log("Hedera Agent initialized successfully");
 
       // Register agent on chain if no agent ID exists
-      if (this.chainConfig && !this.chainConfig.agentId) {
+      if (
+        this.chainConfig &&
+        (!this.chainConfig.agentId || this.chainConfig.agentId === "")
+      ) {
         await this.registerAgentOnChain();
       }
     } catch (error) {
@@ -122,41 +125,72 @@ export class HederaAgentService {
           ],
         });
 
+        // Debug: Log the full result
+        console.log("Registration result:", JSON.stringify(result, null, 2));
+
         // Extract registration details from tool messages
         const toolMessages = result.messages.filter(
           (msg: any) => msg.type === "tool"
         );
 
+        console.log("Tool messages found:", toolMessages.length);
+
         for (const toolMsg of toolMessages) {
+          console.log("Processing tool message:", toolMsg);
           if (toolMsg.content && typeof toolMsg.content === "string") {
             try {
-              const toolResult = JSON.parse(toolMsg.content);
+              // Parse the outer tool message
+              const outerResult = JSON.parse(toolMsg.content);
+              console.log("Parsed outer tool result:", outerResult);
 
-              if (toolResult.success) {
-                if (toolResult.agentId) {
-                  await this.chainConfigManager.updateAgentId(
-                    toolResult.agentId
-                  );
-                  this.chainConfig!.agentId = toolResult.agentId;
-                  console.log("Agent registered with ID:", toolResult.agentId);
-                }
+              // Extract the actual tool result from the nested content
+              const actualContent = outerResult.kwargs?.content;
+              if (actualContent) {
+                const toolResult = JSON.parse(actualContent);
+                console.log("Parsed actual tool result:", toolResult);
 
-                if (toolResult.did) {
-                  await this.chainConfigManager.updateDid(toolResult.did);
-                  this.chainConfig!.did = toolResult.did;
-                  console.log("DID generated:", toolResult.did);
-                }
+                if (toolResult.success) {
+                  if (toolResult.agentId) {
+                    await this.chainConfigManager.updateAgentId(
+                      toolResult.agentId
+                    );
+                    this.chainConfig!.agentId = toolResult.agentId;
+                    console.log(
+                      "Agent registered with ID:",
+                      toolResult.agentId
+                    );
+                  }
 
-                if (toolResult.publicKey) {
-                  await this.chainConfigManager.updatePublicKey(
-                    toolResult.publicKey
-                  );
-                  this.chainConfig!.publicKey = toolResult.publicKey;
-                  console.log("Public key saved:", toolResult.publicKey);
+                  if (toolResult.did) {
+                    await this.chainConfigManager.updateDid(toolResult.did);
+                    this.chainConfig!.did = toolResult.did;
+                    console.log("DID generated:", toolResult.did);
+                  }
+
+                  if (toolResult.publicKey) {
+                    await this.chainConfigManager.updatePublicKey(
+                      toolResult.publicKey
+                    );
+                    this.chainConfig!.publicKey = toolResult.publicKey;
+                    console.log("Public key saved:", toolResult.publicKey);
+                  }
+                } else {
+                  console.log("Tool execution was not successful:", toolResult);
+                  if (
+                    toolResult.error &&
+                    toolResult.error.includes("already registered")
+                  ) {
+                    console.log(
+                      "Agent is already registered, retrieving existing details..."
+                    );
+                    // Try to get existing agent details using the service endpoint
+                    await this.retrieveExistingAgentDetails();
+                  }
                 }
               }
             } catch (parseError) {
               console.error("Could not parse tool message:", parseError);
+              console.error("Raw tool message content:", toolMsg.content);
             }
           }
         }
@@ -169,6 +203,78 @@ export class HederaAgentService {
       console.error("Error registering agent on chain:", error);
       // Don't throw error to prevent agent initialization failure
       console.warn("Continuing without chain registration...");
+    }
+  }
+
+  private async retrieveExistingAgentDetails(): Promise<void> {
+    try {
+      console.log("Retrieving existing agent details...");
+
+      if (this.agent && this.chainConfig) {
+        // Use the get_agent_from_service_endpoint tool to retrieve existing details
+        const result = await this.agent.invoke({
+          messages: [
+            new SystemMessage(
+              "You are a helpful assistant that can interact with the Hedera network. You have access to the get_agent_from_service_endpoint tool. Use it to retrieve the existing agent details."
+            ),
+            new HumanMessage(
+              `Please use the get_agent_from_service_endpoint tool to retrieve the agent details for service endpoint: "${this.chainConfig.serviceEndpoint}"`
+            ),
+          ],
+        });
+
+        console.log(
+          "Agent details retrieval result:",
+          JSON.stringify(result, null, 2)
+        );
+
+        // Extract agent details from tool messages
+        const toolMessages = result.messages.filter(
+          (msg: any) => msg.type === "tool"
+        );
+
+        for (const toolMsg of toolMessages) {
+          if (toolMsg.content && typeof toolMsg.content === "string") {
+            try {
+              const outerResult = JSON.parse(toolMsg.content);
+              const actualContent = outerResult.kwargs?.content;
+              if (actualContent) {
+                const toolResult = JSON.parse(actualContent);
+                console.log("Retrieved agent details:", toolResult);
+
+                if (toolResult.success && toolResult.agent) {
+                  const agent = toolResult.agent;
+
+                  // Update the chain config with retrieved details
+                  if (agent.agentId) {
+                    await this.chainConfigManager.updateAgentId(agent.agentId);
+                    this.chainConfig!.agentId = agent.agentId;
+                    console.log("Retrieved Agent ID:", agent.agentId);
+                  }
+
+                  if (agent.did) {
+                    await this.chainConfigManager.updateDid(agent.did);
+                    this.chainConfig!.did = agent.did;
+                    console.log("Retrieved DID:", agent.did);
+                  }
+
+                  if (agent.publicKey) {
+                    await this.chainConfigManager.updatePublicKey(
+                      agent.publicKey
+                    );
+                    this.chainConfig!.publicKey = agent.publicKey;
+                    console.log("Retrieved Public Key:", agent.publicKey);
+                  }
+                }
+              }
+            } catch (parseError) {
+              console.error("Could not parse agent details:", parseError);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error retrieving existing agent details:", error);
     }
   }
 

@@ -8,8 +8,8 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "zomato/src"
   },
-  "include": ["src/**/*"],
+  "include": ["pizzahut/src/**/*"],
   "exclude": ["node_modules"]
 }
