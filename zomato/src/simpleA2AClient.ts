@@ -55,13 +55,36 @@ export class SimpleA2AClient {
         }),
       });
 
-      const result = await response.json();
+      const result: unknown = await response.json();
 
-      if (result.error) {
-        throw new Error(`A2A Error: ${result.error.message}`);
+      if (
+        typeof result === "object" &&
+        result !== null &&
+        "error" in result &&
+        typeof (result as any).error === "object" &&
+        (result as any).error !== null
+      ) {
+        throw new Error(
+          `A2A Error: ${
+            (result as any).error.message ??
+            JSON.stringify((result as any).error)
+          }`
+        );
       }
 
-      return result.result.parts[0].text;
+      if (
+        typeof result === "object" &&
+        result !== null &&
+        "result" in result &&
+        (result as any).result &&
+        Array.isArray((result as any).result.parts) &&
+        (result as any).result.parts.length > 0 &&
+        typeof (result as any).result.parts[0].text === "string"
+      ) {
+        return (result as any).result.parts[0].text;
+      }
+
+      throw new Error("Invalid A2A response format");
     } catch (error) {
       throw new Error(`Failed to send message: ${error}`);
     }

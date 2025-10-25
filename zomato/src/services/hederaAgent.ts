@@ -19,6 +19,14 @@ import {
   getOrderStatusTool,
   updateOrderStatusTool,
 } from "../tools/orderTool";
+import {
+  mcdonaldsIntegrationTool,
+  getMcdonaldsCapabilitiesTool,
+} from "../tools/mcdonaldsIntegrationTool";
+import {
+  pizzaHutIntegrationTool,
+  getPizzaHutCapabilitiesTool,
+} from "../tools/pizzaHutIntegrationTool";
 import { ChainConfigManager, ChainConfig } from "../utils/chainConfig";
 
 export class HederaAgentService {
@@ -76,6 +84,10 @@ export class HederaAgentService {
         placeOrderTool,
         getOrderStatusTool,
         updateOrderStatusTool,
+        mcdonaldsIntegrationTool,
+        getMcdonaldsCapabilitiesTool,
+        pizzaHutIntegrationTool,
+        getPizzaHutCapabilitiesTool,
       ];
 
       // Combine all tools
@@ -101,6 +113,11 @@ export class HederaAgentService {
           "- Track order status and delivery progress " +
           "- Handle secure payments through Hedera blockchain " +
           "- Provide customer support for food delivery queries " +
+          "- INTEGRATION WITH PARTNER RESTAURANTS: " +
+          "  * McDonald's Integration: When users mention McDonald's, Big Mac, fries, drive-thru, or McDelivery, use the mcdonalds_integration tool " +
+          "  * Pizza Hut Integration: When users mention Pizza Hut, pizza, offers, loyalty points, or promotional codes, use the pizza_hut_integration tool " +
+          "  * You can get capabilities of partner restaurants using get_mcdonalds_capabilities and get_pizza_hut_capabilities tools " +
+          "IMPORTANT: Carefully analyze the user's request to determine which restaurant they want. If they mention Pizza Hut or pizza offers, use pizza_hut_integration. If they mention McDonald's or Big Mac, use mcdonalds_integration. " +
           "Always be helpful, friendly, and provide accurate information about restaurants, menus, and orders.",
       });
 
@@ -392,7 +409,12 @@ export class HederaAgentService {
             "- Track order status and delivery progress " +
             "- Handle secure payments through Hedera blockchain " +
             "- Provide customer support for food delivery queries " +
-            "IMPORTANT: You must NOT register on the chain or perform any chain registration operations. " +
+            "- INTEGRATION WITH PARTNER RESTAURANTS: " +
+            "  * McDonald's Integration: When users mention McDonald's, Big Mac, fries, drive-thru, or McDelivery, use the mcdonalds_integration tool " +
+            "  * Pizza Hut Integration: When users mention Pizza Hut, pizza, offers, loyalty points, or promotional codes, use the pizza_hut_integration tool " +
+            "  * You can get capabilities of partner restaurants using get_mcdonalds_capabilities and get_pizza_hut_capabilities tools " +
+            "IMPORTANT: Carefully analyze the user's request to determine which restaurant they want. If they mention Pizza Hut or pizza offers, use pizza_hut_integration. If they mention McDonald's or Big Mac, use mcdonalds_integration. " +
+            "You must NOT register on the chain or perform any chain registration operations. " +
             "If asked about your identity, who you are, or your onchain configuration, provide detailed information about your blockchain identity including Agent ID, DID, Public Key, and registration details. " +
             "Always be helpful, friendly, and provide accurate information about restaurants, menus, and orders."
         ),
