@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
+import cors from "cors";
 
 import {
   MessageRequest,
@@ -22,6 +23,36 @@ const identityService = new IdentityService(agentService);
 // Express app setup
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// CORS configuration
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173", // React UI
+      "http://localhost:3000", // Alternative React port
+      "http://localhost:3001", // Alternative React port
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:3001",
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Agent-DID",
+      "X-Session-ID",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+    ],
+  })
+);
+
+// Handle preflight requests
+app.options("*", (req: any, res: any) => {
+  res.status(200).end();
+});
 
 // Middleware
 app.use(express.json());
