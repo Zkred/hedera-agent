@@ -23,7 +23,7 @@ dotenv.config();
 
 const express = require("express");
 const { HederaAgentService } = require("./services/hederaAgent");
-import { hederaAgentCard } from "./agentCard";
+import { hederaAgentCard, createHederaAgentCard } from "./agentCard";
 
 export class SimpleA2AServer {
   private app: any;
@@ -52,8 +52,14 @@ export class SimpleA2AServer {
     });
 
     // A2A Agent Card endpoint
-    this.app.get("/.well-known/agent-card.json", (req: any, res: any) => {
-      res.json(hederaAgentCard);
+    this.app.get("/.well-known/agent-card.json", async (req: any, res: any) => {
+      try {
+        const agentCard = await createHederaAgentCard();
+        res.json(agentCard);
+      } catch (error) {
+        console.error("Error generating agent card:", error);
+        res.json(hederaAgentCard); // Fallback to static card
+      }
     });
 
     // A2A Protocol endpoints
