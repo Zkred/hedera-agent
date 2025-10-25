@@ -29,6 +29,7 @@
     "dev": "ts-node src/server.ts",
     "dev:basic": "ts-node src/index.ts",
     "a2a:test": "ts-node src/testSimpleA2A.ts",
+    "test:zomato": "ts-node src/testZomatoAgent.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

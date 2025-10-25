@@ -21,9 +21,9 @@ export const createHederaAgentCard = async (): Promise<ExtendedAgentCard> => {
   const chainConfig = await chainConfigManager.loadConfig();
 
   return {
-    name: "Zkred Wiki Agent",
+    name: "Zomato Food Delivery Agent",
     description:
-      "A specialized agent that can interact with the Hedera network, generate DIDs, perform blockchain operations using the Hedera Agent Kit, and conduct research using Wikipedia.",
+      "A specialized food delivery agent that can discover restaurants, browse menus, place orders, and track deliveries. Integrates with Hedera network for secure transactions and identity management.",
     protocolVersion: "0.3.0",
     version: "1.0.0",
     url: process.env.AGENT_URL || "http://localhost:3000/",
@@ -40,32 +40,46 @@ export const createHederaAgentCard = async (): Promise<ExtendedAgentCard> => {
       : undefined,
     skills: [
       {
+        id: "restaurant-discovery",
+        name: "Restaurant Discovery",
+        description:
+          "Find restaurants near a location, filter by cuisine, ratings, and availability",
+        tags: ["food", "restaurants", "location", "discovery"],
+      },
+      {
+        id: "menu-browsing",
+        name: "Menu Browsing",
+        description:
+          "Browse restaurant menus, check item availability, and get pricing information",
+        tags: ["menu", "food", "pricing", "availability"],
+      },
+      {
+        id: "order-placement",
+        name: "Order Placement",
+        description:
+          "Place food orders, handle payment processing, and manage order details",
+        tags: ["orders", "payment", "food", "delivery"],
+      },
+      {
+        id: "order-tracking",
+        name: "Order Tracking",
+        description:
+          "Track order status, delivery progress, and provide real-time updates",
+        tags: ["tracking", "delivery", "status", "updates"],
+      },
+      {
         id: "hedera-operations",
         name: "Hedera Operations",
         description:
-          "Perform operations on the Hedera network including account queries, token operations, and smart contract interactions",
-        tags: ["blockchain", "hedera", "cryptocurrency", "defi"],
-      },
-      {
-        id: "did-generation",
-        name: "DID Generation",
-        description:
-          "Generate decentralized identifiers using Zkred Agent ID plugin for identity management",
-        tags: ["did", "identity", "ssi", "privacy"],
-      },
-      {
-        id: "research",
-        name: "Wiki Tool",
-        description:
-          "Conduct research using Wikipedia and provide information on various topics",
-        tags: ["research", "wikipedia", "information", "knowledge"],
+          "Perform secure blockchain operations for payments and identity verification",
+        tags: ["blockchain", "hedera", "payments", "security"],
       },
       {
         id: "chat",
-        name: "Chat",
+        name: "Customer Support",
         description:
-          "General conversation and assistance with Hedera-related questions",
-        tags: ["chat", "assistant", "support"],
+          "Provide customer support and assistance with food delivery queries",
+        tags: ["support", "chat", "assistance", "help"],
       },
     ],
     capabilities: {
@@ -80,40 +94,54 @@ export const createHederaAgentCard = async (): Promise<ExtendedAgentCard> => {
 
 // Keep the original export for backward compatibility
 export const hederaAgentCard: AgentCard = {
-  name: "Zkred Wiki Agent",
+  name: "Zomato Food Delivery Agent",
   description:
-    "A specialized agent that can interact with the Hedera network, generate DIDs, perform blockchain operations using the Hedera Agent Kit, and conduct research using Wikipedia.",
+    "A specialized food delivery agent that can discover restaurants, browse menus, place orders, and track deliveries. Integrates with Hedera network for secure transactions and identity management.",
   protocolVersion: "0.3.0",
   version: "1.0.0",
   url: process.env.AGENT_URL || "http://localhost:3000/",
   skills: [
     {
+      id: "restaurant-discovery",
+      name: "Restaurant Discovery",
+      description:
+        "Find restaurants near a location, filter by cuisine, ratings, and availability",
+      tags: ["food", "restaurants", "location", "discovery"],
+    },
+    {
+      id: "menu-browsing",
+      name: "Menu Browsing",
+      description:
+        "Browse restaurant menus, check item availability, and get pricing information",
+      tags: ["menu", "food", "pricing", "availability"],
+    },
+    {
+      id: "order-placement",
+      name: "Order Placement",
+      description:
+        "Place food orders, handle payment processing, and manage order details",
+      tags: ["orders", "payment", "food", "delivery"],
+    },
+    {
+      id: "order-tracking",
+      name: "Order Tracking",
+      description:
+        "Track order status, delivery progress, and provide real-time updates",
+      tags: ["tracking", "delivery", "status", "updates"],
+    },
+    {
       id: "hedera-operations",
       name: "Hedera Operations",
       description:
-        "Perform operations on the Hedera network including account queries, token operations, and smart contract interactions",
-      tags: ["blockchain", "hedera", "cryptocurrency", "defi"],
-    },
-    {
-      id: "did-generation",
-      name: "DID Generation",
-      description:
-        "Generate decentralized identifiers using Zkred Agent ID plugin for identity management",
-      tags: ["did", "identity", "ssi", "privacy"],
-    },
-    {
-      id: "research",
-      name: "Wiki Tool",
-      description:
-        "Conduct research using Wikipedia and provide information on various topics",
-      tags: ["research", "wikipedia", "information", "knowledge"],
+        "Perform secure blockchain operations for payments and identity verification",
+      tags: ["blockchain", "hedera", "payments", "security"],
     },
     {
       id: "chat",
-      name: "Chat",
+      name: "Customer Support",
       description:
-        "General conversation and assistance with Hedera-related questions",
-      tags: ["chat", "assistant", "support"],
+        "Provide customer support and assistance with food delivery queries",
+      tags: ["support", "chat", "assistance", "help"],
     },
   ],
   capabilities: {

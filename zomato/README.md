@@ -1,372 +1,258 @@
-# Zkred Wiki Agent
+# 🍕 Zomato Food Delivery Agent
 
-A TypeScript-based API service that provides AI-powered interactions with the Hedera network using LangChain and the Hedera Agent Kit. Now with **A2A (Agent-to-Agent) protocol support** for standardized agent communication and **Wikipedia research capabilities**.
+A specialized A2A (Agent-to-Agent) compatible food delivery agent built with LangChain and Hedera blockchain integration. This agent can discover restaurants, browse menus, place orders, and track deliveries while maintaining secure transactions through the Hedera network.
 
 ## 🚀 Features
 
-- **Hedera Network Integration**: Full support for Hedera operations via Hedera Agent Kit
-- **AI-Powered**: Uses OpenAI GPT models for intelligent responses
-- **Wikipedia Research**: Conduct research using Wikipedia API for comprehensive information
-- **A2A Protocol**: Agent-to-Agent communication standard compliance
-- **Streaming Support**: Real-time communication with Server-Sent Events
-- **REST API**: Backward compatible REST endpoints
-- **DID Generation**: Zkred Agent ID plugin integration
+### Core Food Delivery Capabilities
 
-## Installation
+- **Restaurant Discovery**: Find restaurants by location, cuisine, rating, and delivery preferences
+- **Menu Browsing**: Browse restaurant menus with detailed item information, pricing, and availability
+- **Order Placement**: Place food orders with automatic price calculation and validation
+- **Order Tracking**: Track order status and delivery progress with real-time updates
+- **Secure Payments**: Handle payments through Hedera blockchain for secure transactions
 
-1. Clone the repository:
+### A2A Protocol Support
+
+- **Agent Card**: Compliant with A2A protocol for agent discovery
+- **Message Handling**: Support for both REST API and A2A protocol endpoints
+- **Streaming**: Real-time updates via Server-Sent Events (SSE)
+- **Task Management**: Full task lifecycle management (submitted → working → completed)
+
+### Blockchain Integration
+
+- **Hedera Network**: Secure blockchain operations for payments and identity verification
+- **DID Management**: Decentralized identity management using Zkred Agent ID plugin
+- **Smart Contracts**: Integration with Hedera smart contracts for secure transactions
+
+## 🛠️ Tech Stack
+
+- **Language**: TypeScript/JavaScript
+- **Framework**: Express.js
+- **AI/LLM**: LangChain with OpenAI GPT-4
+- **Blockchain**: Hedera Hashgraph SDK
+- **Protocol**: A2A (Agent-to-Agent) Protocol v0.3.0
+- **Tools**: Custom food delivery tools for restaurant discovery, menu browsing, and order management
+
+## 📦 Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone <repository-url>
+   cd hedera-agent/zomato
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   Create a `.env` file with the following variables:
+
+   ```env
+   HEDERA_ACCOUNT_ID=your_hedera_account_id
+   HEDERA_PRIVATE_KEY=your_hedera_private_key
+   OPENAI_API_KEY=your_openai_api_key
+   PORT=3000
+   AGENT_URL=http://localhost:3000
+   ```
+
+4. **Build the project**
+   ```bash
+   npm run build
+   ```
+
+## 🚀 Usage
+
+### Start the Server
 
 ```bash
-git clone git@github.com:Zkred/hedera-agent-a.git
-cd hedera-agent-ethonline
-```
-
-2. Install dependencies:
-
-```bash
-npm install
-```
-
-3. Create a `.env` file in the root directory:
-
-```env
-# Hedera Configuration
-HEDERA_ACCOUNT_ID=0.0.123456
-HEDERA_PRIVATE_KEY=your_private_key_here
-
-# OpenAI Configuration
-OPENAI_API_KEY=your_openai_api_key_here
-
-# Server Configuration (optional)
-PORT=3000
-```
-
-## Development
-
-### Run in development mode:
-
-```bash
-# A2A-enabled server (recommended)
+# Development mode
 npm run dev
 
-# Basic server (REST API only)
-npm run dev:basic
-```
-
-### Build the project:
-
-```bash
-npm run build
-```
-
-### Run the production build:
-
-```bash
+# Production mode
 npm start
 ```
 
-### Test A2A Integration:
+The server will start on port 3000 (or the PORT specified in your .env file).
+
+### Available Endpoints
+
+#### Health Check
+
+```bash
+GET http://localhost:3000/health
+```
+
+#### A2A Agent Card
+
+```bash
+GET http://localhost:3000/.well-known/agent-card.json
+```
+
+#### Message Endpoints
+
+```bash
+# REST API
+POST http://localhost:3000/message
+Content-Type: application/json
+{
+  "message": "I want to order pizza from Pizza Palace"
+}
+
+# A2A Protocol
+POST http://localhost:3000/a2a/sendMessage
+Content-Type: application/json
+{
+  "message": {
+    "parts": [
+      {
+        "kind": "text",
+        "text": "I want to order pizza from Pizza Palace"
+      }
+    ]
+  }
+}
+
+# A2A Streaming
+POST http://localhost:3000/a2a/sendMessageStream
+```
+
+## 🧪 Testing
+
+### Test the Zomato Agent
+
+```bash
+npm run test:zomato
+```
+
+This will run a comprehensive test of the agent's capabilities including:
+
+- Restaurant discovery
+- Menu browsing
+- Order placement
+- Order tracking
+- General food queries
+
+### Test A2A Protocol
 
 ```bash
 npm run a2a:test
 ```
 
-## API Endpoints
+## 🍽️ Example Usage
 
-### REST API (Backward Compatible)
+### Restaurant Discovery
 
-- **GET** `/health` - Health check
-- **POST** `/message` - Send message (REST format)
-
-### A2A Protocol Endpoints
-
-- **GET** `/.well-known/agent-card.json` - Agent capabilities and metadata
-- **POST** `/a2a/sendMessage` - Send message (A2A format with JSON-RPC 2.0)
-- **POST** `/a2a/sendMessageStream` - Stream messages (Server-Sent Events for real-time responses)
-
-### A2A Agent Card
-
-The agent card defines capabilities and is available at `/.well-known/agent-card.json`:
-
-```json
-{
-  "name": "Zkred Wiki Agent",
-  "description": "A specialized agent that can interact with the Hedera network, generate DIDs, perform blockchain operations using the Hedera Agent Kit, and conduct research using Wikipedia.",
-  "skills": [
-    {
-      "id": "hedera-operations",
-      "name": "Hedera Operations",
-      "description": "Perform operations on the Hedera network including account queries, token operations, and smart contract interactions",
-      "tags": ["blockchain", "hedera", "cryptocurrency", "defi"]
-    },
-    {
-      "id": "did-generation",
-      "name": "DID Generation",
-      "description": "Generate decentralized identifiers using Zkred Agent ID plugin for identity management",
-      "tags": ["did", "identity", "ssi", "privacy"]
-    },
-    {
-      "id": "research",
-      "name": "Wiki Tool",
-      "description": "Conduct research using Wikipedia and provide information on various topics",
-      "tags": ["research", "wikipedia", "information", "knowledge"]
-    },
-    {
-      "id": "chat",
-      "name": "Chat",
-      "description": "General conversation and assistance with Hedera-related questions",
-      "tags": ["chat", "assistant", "support"]
-    }
-  ],
-  "capabilities": {
-    "streaming": true,
-    "pushNotifications": true,
-    "stateTransitionHistory": true
-  }
-}
+```
+User: "I'm in New York and looking for Italian restaurants near me"
+Agent: [Searches for Italian restaurants in New York with ratings, delivery times, and fees]
 ```
 
-## Example Usage
+### Menu Browsing
 
-### REST API Examples
-
-```bash
-# Health check
-curl http://localhost:3000/health
-
-# Send a message (REST format)
-curl -X POST http://localhost:3000/message \
-  -H "Content-Type: application/json" \
-  -d '{"message": "what'\''s my balance?"}'
+```
+User: "Can you show me the menu for Pizza Palace?"
+Agent: [Displays complete menu with items, prices, categories, and availability]
 ```
 
-### A2A Protocol Examples
+### Order Placement
 
-#### Get Agent Card
-
-```bash
-curl http://localhost:3000/.well-known/agent-card.json
+```
+User: "I want to order a Margherita Pizza and Coca Cola from Pizza Palace"
+Agent: [Validates order, calculates total with tax and delivery fee, places order]
 ```
 
-#### Send A2A Message (Standard)
+### Order Tracking
 
-```bash
-curl -X POST http://localhost:3000/a2a/sendMessage \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": "1",
-    "message": {
-      "messageId": "test-123",
-      "role": "user",
-      "parts": [{"kind": "text", "text": "Hello, agent!"}],
-      "contextId": "ctx-456"
-    }
-  }'
+```
+User: "What's the status of my order?"
+Agent: [Shows current order status, delivery progress, and estimated delivery time]
 ```
 
-#### Send A2A Message with Hedera Query
+## 🔧 Agent Capabilities
 
-```bash
-curl -X POST http://localhost:3000/a2a/sendMessage \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": "2",
-    "message": {
-      "messageId": "hedera-123",
-      "role": "user",
-      "parts": [{"kind": "text", "text": "What is my Hedera account balance?"}],
-      "contextId": "ctx-457"
-    }
-  }'
-```
+The Zomato agent includes the following tools:
 
-#### Send A2A Message with Wikipedia Research
+### Restaurant Tools
 
-```bash
-curl -X POST http://localhost:3000/a2a/sendMessage \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": "3",
-    "message": {
-      "messageId": "wiki-123",
-      "role": "user",
-      "parts": [{"kind": "text", "text": "Research quantum computing on Wikipedia"}],
-      "contextId": "ctx-458"
-    }
-  }'
-```
+- `search_restaurants`: Find restaurants by location and filters
+- `get_restaurant_details`: Get detailed restaurant information
 
-#### Send A2A Message with DID Generation
+### Menu Tools
 
-```bash
-curl -X POST http://localhost:3000/a2a/sendMessage \
-  -H "Content-Type: application/json" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": "4",
-    "message": {
-      "messageId": "did-123",
-      "role": "user",
-      "parts": [{"kind": "text", "text": "Generate a new DID for me"}],
-      "contextId": "ctx-459"
-    }
-  }'
-```
+- `get_restaurant_menu`: Browse complete restaurant menus
+- `get_menu_item_details`: Get detailed information about specific menu items
 
-#### Stream A2A Messages (Server-Sent Events)
+### Order Tools
 
-```bash
-curl -X POST http://localhost:3000/a2a/sendMessageStream \
-  -H "Content-Type: application/json" \
-  -H "Accept: text/event-stream" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": "5",
-    "message": {
-      "messageId": "stream-123",
-      "role": "user",
-      "parts": [{"kind": "text", "text": "Research blockchain technology and explain how Hedera works"}],
-      "contextId": "ctx-460"
-    }
-  }'
-```
+- `place_order`: Place food orders with validation and pricing
+- `get_order_status`: Track order status and delivery progress
+- `update_order_status`: Update order status (for restaurant/delivery use)
 
-#### A2A Response Format
+### Blockchain Tools
 
-The agent responds with JSON-RPC 2.0 format:
+- Hedera network operations
+- DID generation and management
+- Secure payment processing
+- Identity verification
 
-```json
-{
-  "jsonrpc": "2.0",
-  "id": "1",
-  "result": {
-    "kind": "message",
-    "messageId": "agent-msg-123",
-    "role": "agent",
-    "parts": [
-      {
-        "kind": "text",
-        "text": "Agent response here..."
-      }
-    ],
-    "contextId": "ctx-456"
-  }
-}
-```
+## 🌐 A2A Protocol Compliance
 
-### Using JavaScript fetch:
+This agent is fully compliant with the A2A (Agent-to-Agent) Protocol v0.3.0:
 
-```javascript
-const response = await fetch("http://localhost:3000/message", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    message:
-      "generate an agent DID for my account: 0xfd885bf080abffe1dcde1f88782fc4007b5207e5 for Privado Main",
-  }),
-});
+- **Agent Card**: Provides comprehensive agent information and capabilities
+- **Message Handling**: Supports both synchronous and streaming message processing
+- **Task Management**: Full task lifecycle with status updates
+- **Error Handling**: Proper error codes and messages
+- **Authentication**: Secure agent-to-agent communication
 
-const data = await response.json();
-console.log(data.response);
-```
+## 🔒 Security Features
 
-### A2A Client Usage
+- **Hedera Blockchain**: All transactions are secured through Hedera network
+- **DID Management**: Decentralized identity for secure agent communication
+- **Input Validation**: Comprehensive validation of all inputs
+- **Error Handling**: Secure error handling without information leakage
+- **Authentication**: API key and token-based authentication
 
-```javascript
-import { SimpleA2AClient } from "./src/simpleA2AClient";
+## 📊 Mock Data
 
-const client = new SimpleA2AClient("http://localhost:3000");
+The agent includes comprehensive mock data for demonstration:
 
-// Get agent capabilities
-const card = await client.getAgentCard();
-console.log("Agent:", card.name);
+- **4 Restaurants**: Pizza Palace, Burger Barn, Sushi Express, Taco Fiesta
+- **15+ Menu Items**: Complete menus with pricing, descriptions, and availability
+- **Order Management**: Full order lifecycle with status tracking
+- **Location Data**: New York-based restaurant locations
 
-// Send message
-const response = await client.sendMessage("Generate a DID for me");
-console.log("Response:", response);
+## 🤝 Contributing
 
-// Stream messages
-const stream = await client.sendMessageStream("Tell me about Hedera");
-for await (const event of stream) {
-  console.log("Event:", event);
-}
-```
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-## A2A Integration
+## 📄 License
 
-This agent now supports the **A2A (Agent-to-Agent) protocol**, enabling standardized communication between agents. See [A2A_INTEGRATION.md](./A2A_INTEGRATION.md) for detailed documentation.
+This project is licensed under the ISC License.
 
-### A2A Endpoint Descriptions
+## 🆘 Support
 
-#### `GET /.well-known/agent-card.json`
+For support and questions:
 
-**Purpose**: Agent discovery and capability advertisement
-**Response**: Agent metadata including skills, capabilities, and supported protocols
-**Content-Type**: `application/json`
+- Check the health endpoint: `GET /health`
+- Review the agent card: `GET /.well-known/agent-card.json`
+- Run the test suite: `npm run test:zomato`
 
-#### `POST /a2a/sendMessage`
+## 🔮 Future Enhancements
 
-**Purpose**: Send a message to the agent using A2A protocol
-**Request Format**: JSON-RPC 2.0 with A2A message structure
-**Response Format**: JSON-RPC 2.0 with agent response
-**Content-Type**: `application/json`
-
-**Request Structure**:
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": "unique-request-id",
-  "message": {
-    "messageId": "unique-message-id",
-    "role": "user",
-    "parts": [
-      {
-        "kind": "text",
-        "text": "Your message here"
-      }
-    ],
-    "contextId": "conversation-context-id"
-  }
-}
-```
-
-#### `POST /a2a/sendMessageStream`
-
-**Purpose**: Send a message with real-time streaming response
-**Request Format**: Same as `/a2a/sendMessage`
-**Response Format**: Server-Sent Events (SSE) with task lifecycle events
-**Content-Type**: `text/event-stream`
-
-**Stream Events**:
-
-- `task` - Task lifecycle (submitted → working → completed)
-- `message` - Agent response messages
-- `error` - Error notifications
-
-### Key Benefits
-
-- **Interoperability**: Communicate with other A2A-compliant agents
-- **Standardization**: Follows official A2A protocol specification
-- **Real-time Communication**: Streaming support for long-running tasks
-- **Task Management**: Proper handling of complex operations
-- **Backward Compatibility**: Existing REST API continues to work
-
-### Quick Start with A2A
-
-1. Start the A2A-enabled server: `npm run dev`
-2. Test the integration: `npm run a2a:test`
-3. Access agent card: `http://localhost:3000/.well-known/agent-card.json`
-4. Send A2A messages: `POST /a2a/sendMessage`
-5. Stream messages: `POST /a2a/sendMessageStream`
-
-## Documentation
-
-- [A2A Integration Guide](./A2A_INTEGRATION.md) - Detailed A2A protocol documentation
-- [Hedera Agent Kit](https://docs.hedera.com/agents) - Hedera Agent Kit documentation
-- [A2A Protocol](https://google-a2a.github.io/A2A) - Official A2A protocol specification
+- Real restaurant API integration
+- Payment gateway integration
+- Real-time delivery tracking
+- Multi-language support
+- Advanced recommendation engine
+- Integration with delivery services
+- Mobile app support

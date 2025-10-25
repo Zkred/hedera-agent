@@ -9,6 +9,16 @@ const { createAgent } = require("langchain");
 const { SystemMessage, HumanMessage } = require("@langchain/core/messages");
 import { AgentResponse } from "../types";
 import { wikipediaTool } from "../tools/wikitool";
+import {
+  restaurantSearchTool,
+  getRestaurantDetailsTool,
+} from "../tools/restaurantTool";
+import { getMenuTool, getMenuItemDetailsTool } from "../tools/menuTool";
+import {
+  placeOrderTool,
+  getOrderStatusTool,
+  updateOrderStatusTool,
+} from "../tools/orderTool";
 import { ChainConfigManager, ChainConfig } from "../utils/chainConfig";
 
 export class HederaAgentService {
@@ -57,7 +67,16 @@ export class HederaAgentService {
       const hederaTools = hederaAgentToolkit.getTools();
 
       // Add custom tools
-      const customTools = [wikipediaTool];
+      const customTools = [
+        wikipediaTool,
+        restaurantSearchTool,
+        getRestaurantDetailsTool,
+        getMenuTool,
+        getMenuItemDetailsTool,
+        placeOrderTool,
+        getOrderStatusTool,
+        updateOrderStatusTool,
+      ];
 
       // Combine all tools
       const tools = [...hederaTools, ...customTools];
@@ -74,7 +93,15 @@ export class HederaAgentService {
         model: llm,
         tools,
         systemPrompt:
-          "You are a helpful assistant that can interact with the Hedera network and perform research using Wikipedia. You can help with blockchain operations, DID generation, and general research tasks.",
+          "You are Zomato Food Delivery Agent, a specialized assistant for food delivery services. You can help users discover restaurants, browse menus, place orders, and track deliveries. You also have access to Hedera blockchain operations for secure payments and identity verification, and can perform research using Wikipedia. " +
+          "Key capabilities: " +
+          "- Search for restaurants by location, cuisine, rating, and delivery preferences " +
+          "- Browse restaurant menus and get detailed item information " +
+          "- Place food orders with automatic price calculation and validation " +
+          "- Track order status and delivery progress " +
+          "- Handle secure payments through Hedera blockchain " +
+          "- Provide customer support for food delivery queries " +
+          "Always be helpful, friendly, and provide accurate information about restaurants, menus, and orders.",
       });
 
       this.isInitialized = true;
@@ -357,9 +384,17 @@ export class HederaAgentService {
     const response = await this.agent.invoke({
       messages: [
         new SystemMessage(
-          "You are a helpful assistant that can interact with the Hedera network and perform research using Wikipedia. You can help with blockchain operations, DID generation, and general research tasks. " +
+          "You are Zomato Food Delivery Agent, a specialized assistant for food delivery services. You can help users discover restaurants, browse menus, place orders, and track deliveries. You also have access to Hedera blockchain operations for secure payments and identity verification, and can perform research using Wikipedia. " +
+            "Key capabilities: " +
+            "- Search for restaurants by location, cuisine, rating, and delivery preferences " +
+            "- Browse restaurant menus and get detailed item information " +
+            "- Place food orders with automatic price calculation and validation " +
+            "- Track order status and delivery progress " +
+            "- Handle secure payments through Hedera blockchain " +
+            "- Provide customer support for food delivery queries " +
             "IMPORTANT: You must NOT register on the chain or perform any chain registration operations. " +
-            "If asked about your identity, who you are, or your onchain configuration, provide detailed information about your blockchain identity including Agent ID, DID, Public Key, and registration details."
+            "If asked about your identity, who you are, or your onchain configuration, provide detailed information about your blockchain identity including Agent ID, DID, Public Key, and registration details. " +
+            "Always be helpful, friendly, and provide accurate information about restaurants, menus, and orders."
         ),
         new HumanMessage(message),
       ],

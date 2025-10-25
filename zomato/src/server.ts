@@ -24,7 +24,9 @@ const PORT = process.env.PORT || 3000;
 
 function startServer() {
   try {
-    console.log("🚀 Starting Hedera Agent with A2A Integration...");
+    console.log(
+      "🍕 Starting Zomato Food Delivery Agent with A2A Integration..."
+    );
     const server = new SimpleA2AServer();
     server.start(parseInt(PORT.toString()));
   } catch (error) {

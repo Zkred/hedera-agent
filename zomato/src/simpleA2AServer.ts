@@ -45,8 +45,15 @@ export class SimpleA2AServer {
     this.app.get("/health", (req: any, res: any) => {
       const response = {
         status: "OK",
-        message: "Hedera Agent API is running",
+        message: "Zomato Food Delivery Agent API is running",
         a2aEnabled: true,
+        capabilities: [
+          "restaurant-discovery",
+          "menu-browsing",
+          "order-placement",
+          "order-tracking",
+          "hedera-operations",
+        ],
       };
       res.json(response);
     });
@@ -244,7 +251,9 @@ export class SimpleA2AServer {
 
   start(port: number = 3000) {
     this.app.listen(port, () => {
-      console.log(`🚀 Hedera Agent API server running on port ${port}`);
+      console.log(
+        `🍕 Zomato Food Delivery Agent API server running on port ${port}`
+      );
       console.log(`📡 Health check: http://localhost:${port}/health`);
       console.log(`💬 Message endpoint: http://localhost:${port}/message`);
       console.log(
@@ -253,6 +262,11 @@ export class SimpleA2AServer {
       console.log(`🔗 A2A Protocol endpoints:`);
       console.log(`   - POST http://localhost:${port}/a2a/sendMessage`);
       console.log(`   - POST http://localhost:${port}/a2a/sendMessageStream`);
+      console.log(`🍽️  Food Delivery Capabilities:`);
+      console.log(`   - Restaurant discovery and search`);
+      console.log(`   - Menu browsing and item details`);
+      console.log(`   - Order placement and tracking`);
+      console.log(`   - Secure payments via Hedera blockchain`);
     });
   }
 
