@@ -12,11 +12,23 @@ export const pizzaHutIntegrationTool = tool(
   async (args: { message: string }): Promise<string> => {
     try {
       // Pizza Hut agent typically runs on port 3002
-      const pizzaHutClient = new SimpleA2AClient("http://localhost:3002");
+      const pizzaHutClient = new SimpleA2AClient("http://localhost:3001");
 
       console.log(`🍕 Sending message to Pizza Hut agent: ${args.message}`);
 
-      const response = await pizzaHutClient.sendMessage(args.message);
+      // Add timeout to prevent infinite loops
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(
+          () =>
+            reject(
+              new Error("Request timeout - Pizza Hut agent not responding")
+            ),
+          10000
+        );
+      });
+
+      const responsePromise = pizzaHutClient.sendMessage(args.message);
+      const response = await Promise.race([responsePromise, timeoutPromise]);
 
       console.log(`🍕 Pizza Hut agent response: ${response}`);
 
@@ -28,10 +40,37 @@ export const pizzaHutIntegrationTool = tool(
       });
     } catch (error) {
       console.error("Error communicating with Pizza Hut agent:", error);
+
+      // Provide fallback response when Pizza Hut agent is not available
+      const fallbackResponse = `I'm sorry, but the Pizza Hut agent is currently not available. However, I can help you with Pizza Hut information directly:
+
+🍕 **Pizza Hut Menu Items Available:**
+• **Pizzas:** Supreme, Meat Lover's, Veggie Lover's, Pepperoni, Margherita
+• **Crust Options:** Hand Tossed, Thin 'N Crispy, Stuffed Crust, Pan Pizza
+• **Sizes:** Personal (6"), Medium (10"), Large (12"), Extra Large (14")
+• **Wings:** Buffalo, BBQ, Honey BBQ, Spicy Buffalo (6, 12, or 24 pieces)
+• **Sides:** Breadsticks, Cinnamon Sticks, Pasta, Salads
+• **Desserts:** Chocolate Chip Cookie, Cinnamon Sticks, Brownie
+
+🍕 **Special Features:**
+• Custom pizza builder with unlimited toppings
+• Online ordering and delivery
+• Loyalty rewards program (earn points on every order)
+• Promotional codes and special offers
+• Group orders and catering options
+
+🍕 **Popular Combos:**
+• Supreme Pizza + Wings + Breadsticks
+• Meat Lover's Pizza + 2-Liter Drink
+• Veggie Lover's Pizza + Salad
+
+Would you like to know more about any specific items, create a custom pizza, or check for current promotions?`;
+
       return JSON.stringify({
         success: false,
-        error: `Failed to communicate with Pizza Hut agent: ${error}`,
-        agent: "Pizza Hut",
+        response: fallbackResponse,
+        agent: "Pizza Hut (Fallback)",
+        error: `Pizza Hut agent unavailable: ${error}`,
         timestamp: new Date().toISOString(),
       });
     }

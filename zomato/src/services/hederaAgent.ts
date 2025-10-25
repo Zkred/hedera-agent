@@ -8,7 +8,7 @@ const { zkredAgentIdPlugin } = require("@zkred/hedera-agentid-plugin");
 const { createAgent } = require("langchain");
 const { SystemMessage, HumanMessage } = require("@langchain/core/messages");
 import { AgentResponse } from "../types";
-import { wikipediaTool } from "../tools/wikitool";
+
 import {
   restaurantSearchTool,
   getRestaurantDetailsTool,
@@ -76,7 +76,7 @@ export class HederaAgentService {
 
       // Add custom tools
       const customTools = [
-        wikipediaTool,
+        // wikipediaTool,
         restaurantSearchTool,
         getRestaurantDetailsTool,
         getMenuTool,
