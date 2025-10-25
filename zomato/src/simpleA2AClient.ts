@@ -36,13 +36,20 @@ export class SimpleA2AClient {
     }
   }
 
-  async sendMessage(message: string): Promise<string> {
+  async sendMessage(message: string, sessionId?: string): Promise<string> {
     try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      // Add session ID header if provided
+      if (sessionId) {
+        headers["x-session-id"] = sessionId;
+      }
+
       const response = await fetch(`${this.baseUrl}/a2a/sendMessage`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           jsonrpc: "2.0",
           id: "1",

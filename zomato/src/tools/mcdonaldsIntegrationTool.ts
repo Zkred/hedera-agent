@@ -1,6 +1,7 @@
 import { tool } from "langchain";
 import { z } from "zod";
 import { SimpleA2AClient } from "../simpleA2AClient";
+import { zkredAgentIdPlugin } from "@zkred/hedera-agentid-plugin";
 
 /**
  * Tool for integrating with McDonald's agent
@@ -11,8 +12,98 @@ import { SimpleA2AClient } from "../simpleA2AClient";
 export const mcdonaldsIntegrationTool = tool(
   async (args: { message: string }): Promise<string> => {
     try {
-      // McDonald's agent runs on port 3002
+      // Get environment variables
+      const zomatoPrivateKey = process.env.HEDERA_PRIVATE_KEY;
+      const zomatoChainId = 296;
+
+      if (!zomatoPrivateKey) {
+        throw new Error(
+          "Missing required environment variable: ZOMATO_PRIVATE_KEY"
+        );
+      }
+
+      // Get Zomato's DID from agent card
+      const zomatoClient = new SimpleA2AClient("http://localhost:3000");
+      const zomatoAgentCard = await zomatoClient.getAgentCard();
+      const zomatoDid = zomatoAgentCard.chainConfig?.did;
+
+      if (!zomatoDid) {
+        throw new Error("Zomato DID not found in agent card");
+      }
+
+      // Get McDonald's DID from their agent card
       const mcdonaldsClient = new SimpleA2AClient("http://localhost:3002");
+      const mcdonaldsAgentCard = await mcdonaldsClient.getAgentCard();
+      const mcdonaldsDid = mcdonaldsAgentCard.chainConfig?.did;
+
+      if (!mcdonaldsDid) {
+        throw new Error("McDonald's DID not found in agent card");
+      }
+
+      // Get plugin tools
+      const tools = zkredAgentIdPlugin.tools({});
+      const initiateHandshakeTool = tools.find(
+        (tool: any) => tool.method === "initiate_agent_handshake"
+      );
+      const completeHandshakeTool = tools.find(
+        (tool: any) => tool.method === "complete_agent_handshake"
+      );
+
+      if (!initiateHandshakeTool || !completeHandshakeTool) {
+        throw new Error("Handshake tools not found");
+      }
+
+      // Establish handshake with McDonald's
+      console.log(
+        `🤝 Initiating handshake with McDonald's (DID: ${mcdonaldsDid})...`
+      );
+
+      const mcdonaldsHandshake = await initiateHandshakeTool.execute(
+        null, // client
+        {}, // context
+        {
+          initiatorDid: zomatoDid,
+          initiatorChainId: zomatoChainId,
+          receiverDid: mcdonaldsDid,
+          receiverChainId: 296,
+        }
+      );
+
+      console.log("McDonald's handshake result:", mcdonaldsHandshake);
+
+      if (!mcdonaldsHandshake.success) {
+        throw new Error(
+          `Failed to initiate handshake with McDonald's: ${
+            mcdonaldsHandshake.error || "Unknown error"
+          }`
+        );
+      }
+
+      const mcdonaldsComplete = await completeHandshakeTool.execute(
+        null, // client
+        {}, // context
+        {
+          privateKey: zomatoPrivateKey,
+          sessionId: mcdonaldsHandshake.data.handshake.sessionId.toString(),
+          receiverAgentCallbackEndPoint:
+            mcdonaldsHandshake.data.handshake.receiverAgentCallbackEndPoint,
+          challenge: mcdonaldsHandshake.data.handshake.challenge,
+        }
+      );
+
+      if (
+        !mcdonaldsComplete.success ||
+        !mcdonaldsComplete.data?.handshakeCompleted
+      ) {
+        throw new Error("Failed to complete handshake with McDonald's");
+      }
+
+      const sessionId = mcdonaldsHandshake.data.handshake.sessionId;
+      console.log(
+        `🤝 McDonald's handshake completed! Session ID: ${sessionId}`
+      );
+
+      // McDonald's agent runs on port 3002
 
       console.log(`🍟 Sending message to McDonald's agent: ${args.message}`);
 
@@ -27,7 +118,10 @@ export const mcdonaldsIntegrationTool = tool(
         );
       });
 
-      const responsePromise = mcdonaldsClient.sendMessage(args.message);
+      const responsePromise = mcdonaldsClient.sendMessage(
+        args.message,
+        sessionId.toString()
+      );
       const response = await Promise.race([responsePromise, timeoutPromise]);
 
       console.log(`🍟 McDonald's agent response: ${response}`);

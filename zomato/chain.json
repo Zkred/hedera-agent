@@ -1,9 +1,9 @@
 {
-  "agentId": "13",
+  "agentId": "1",
   "chainId": 296,
-  "description": "Wiki agent",
-  "serviceEndpoint": "https://localhost:3000/sdz2p",
+  "description": "Zomato Food Delivery Agent",
+  "serviceEndpoint": "http://localhost:3000/",
   "publicKey": "0x2aa5c33FE8b389707c753AE2DdD0d613aC226C34",
-  "registeredAt": "2025-10-25T06:39:27.973Z",
+  "registeredAt": "2025-10-25T18:06:51.587Z",
   "did": "did:iden3:privado:main:CW3RbmkdMNjifJExsfKxqXY8UKH8kuMsG9XcMYn4Yx"
 }

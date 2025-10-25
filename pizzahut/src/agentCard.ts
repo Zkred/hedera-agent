@@ -80,6 +80,18 @@ export const createPizzaHutAgentCard = async (): Promise<ExtendedAgentCard> => {
           "Provide customer support and assistance with pizza orders and delivery",
         tags: ["support", "chat", "assistance", "help"],
       },
+      {
+        id: "handshake",
+        name: "Agent Handshake",
+        description:
+          "Initiate and complete secure handshakes with other agents for authenticated communication",
+        tags: [
+          "handshake",
+          "authentication",
+          "security",
+          "agent-communication",
+        ],
+      },
     ],
     capabilities: {
       streaming: true,
@@ -139,6 +151,13 @@ export const pizzaHutAgentCard: AgentCard = {
       description:
         "Provide customer support and assistance with pizza orders and delivery",
       tags: ["support", "chat", "assistance", "help"],
+    },
+    {
+      id: "handshake",
+      name: "Agent Handshake",
+      description:
+        "Initiate and complete secure handshakes with other agents for authenticated communication",
+      tags: ["handshake", "authentication", "security", "agent-communication"],
     },
   ],
   capabilities: {

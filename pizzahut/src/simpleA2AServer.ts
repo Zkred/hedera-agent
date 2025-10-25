@@ -24,10 +24,12 @@ dotenv.config();
 import express from "express";
 import { PizzaHutAgentService } from "./services/pizzaHutAgent";
 import { pizzaHutAgentCard, createPizzaHutAgentCard } from "./agentCard";
+import { zkredAgentIdPlugin } from "@zkred/hedera-agentid-plugin";
 
 export class SimpleA2AServer {
   private app: any;
   private agentService: any;
+  private sessions: Map<string, any> = new Map();
 
   constructor() {
     this.app = express();
@@ -72,6 +74,32 @@ export class SimpleA2AServer {
     // A2A Protocol endpoints
     this.app.post("/a2a/sendMessage", async (req: any, res: any) => {
       try {
+        // Check for session ID in headers
+        console.log("Checking for session ID in headers");
+
+        const sessionId = req.headers["x-session-id"];
+        console.log("Session ID:", sessionId);
+
+        if (!sessionId) {
+          console.log("No session ID found");
+          return res.status(401).json({
+            error: "Session ID required",
+            code: -32601,
+            message:
+              "Authentication required. Please complete handshake first.",
+          });
+        }
+
+        // Validate session
+        const session = this.sessions.get(sessionId.toString());
+        if (!session || !session.verified) {
+          return res.status(401).json({
+            error: "Invalid or expired session",
+            code: -32601,
+            message: "Invalid session. Please re-establish handshake.",
+          });
+        }
+
         const { message } = req.body;
 
         if (!message || !message.parts) {
@@ -123,6 +151,27 @@ export class SimpleA2AServer {
     // A2A streaming endpoint
     this.app.post("/a2a/sendMessageStream", async (req: any, res: any) => {
       try {
+        // Check for session ID in headers
+        const sessionId = req.headers["x-session-id"];
+        if (!sessionId) {
+          return res.status(401).json({
+            error: "Session ID required",
+            code: -32601,
+            message:
+              "Authentication required. Please complete handshake first.",
+          });
+        }
+
+        // Validate session
+        const session = this.sessions.get(sessionId.toString());
+        if (!session || !session.verified) {
+          return res.status(401).json({
+            error: "Invalid or expired session",
+            code: -32601,
+            message: "Invalid session. Please re-establish handshake.",
+          });
+        }
+
         const { message } = req.body;
 
         if (!message || !message.parts) {
@@ -220,6 +269,115 @@ export class SimpleA2AServer {
       }
     });
 
+    // Handshake endpoints
+    this.app.post("/initiate", async (req: any, res: any) => {
+      try {
+        const { sessionId, initiatorDid, initiatorChainId } = req.body;
+
+        if (!sessionId || !initiatorDid || !initiatorChainId) {
+          return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        // Generate a new challenge for the initiator
+        const responderChallenge = this.generateChallenge();
+
+        // Get the plugin tools
+        const tools = zkredAgentIdPlugin.tools({});
+        const validateAgentTool = tools.find(
+          (tool: any) => tool.method === "validate_agent"
+        );
+
+        if (!validateAgentTool) {
+          throw new Error("Validate agent tool not found");
+        }
+
+        // Validate the initiator agent
+        const didInformation = await validateAgentTool.execute(
+          null, // client
+          {}, // context
+          { did: initiatorDid, chainId: initiatorChainId }
+        );
+
+        if (!didInformation.success) {
+          return res.status(400).json({ error: "Invalid initiator agent" });
+        }
+
+        // Store the session
+        this.sessions.set(sessionId.toString(), {
+          initiatorDid,
+          challenge: responderChallenge,
+          timestamp: Date.now(),
+          did: didInformation.data,
+        });
+
+        res.json({
+          data: {
+            challenge: responderChallenge,
+            sessionId,
+          },
+        });
+      } catch (error) {
+        console.error("Error in /initiate:", error);
+        res.status(500).json({ error: "Failed to initiate handshake" });
+      }
+    });
+
+    this.app.post("/completeHandshake", async (req: any, res: any) => {
+      try {
+        const { sessionId, signature } = req.body;
+
+        if (!sessionId || !signature) {
+          return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const session = this.sessions.get(sessionId.toString());
+        if (!session) {
+          return res.status(404).json({ error: "Session not found" });
+        }
+
+        // Get the plugin tools
+        const tools = zkredAgentIdPlugin.tools({});
+        const verifySignatureTool = tools.find(
+          (tool: any) => tool.method === "verify_signature"
+        );
+
+        if (!verifySignatureTool) {
+          throw new Error("Verify signature tool not found");
+        }
+
+        // Verify the signature
+        const isValid = await verifySignatureTool.execute(
+          null, // client
+          {}, // context
+          {
+            sessionId: sessionId.toString(),
+            challenge: session.challenge,
+            signature,
+            did: session.did,
+          }
+        );
+
+        if (!isValid.success || !isValid.data) {
+          return res.status(401).json({ error: "Invalid signature" });
+        }
+
+        // Mark session as verified
+        session.verified = true;
+        session.initiatorPublicKey = session.did;
+
+        res.json({
+          data: {
+            sessionId,
+            status: "handshake_completed",
+            timestamp: Date.now(),
+          },
+        });
+      } catch (error) {
+        console.error("Error in /completeHandshake:", error);
+        res.status(500).json({ error: "Failed to complete handshake" });
+      }
+    });
+
     // Main message endpoint (REST API - keep for backward compatibility)
     this.app.post("/message", async (req: any, res: any) => {
       try {
@@ -279,6 +437,13 @@ export class SimpleA2AServer {
         const v = c == "x" ? r : (r & 0x3) | 0x8;
         return v.toString(16);
       }
+    );
+  }
+
+  private generateChallenge(): string {
+    return (
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15)
     );
   }
 }

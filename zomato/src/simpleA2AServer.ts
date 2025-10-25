@@ -25,10 +25,12 @@ import express from "express";
 import cors from "cors";
 import { HederaAgentService } from "./services/hederaAgent";
 import { hederaAgentCard, createHederaAgentCard } from "./agentCard";
+import { zkredAgentIdPlugin } from "@zkred/hedera-agentid-plugin";
 
 export class SimpleA2AServer {
   private app: any;
   private agentService: any;
+  private sessions: Map<string, any> = new Map();
 
   constructor() {
     this.app = express();
@@ -249,6 +251,168 @@ export class SimpleA2AServer {
       }
     });
 
+    // Handshake initiation endpoint for Zomato agent
+    this.app.post("/initiateHandshake", async (req: any, res: any) => {
+      console.log("🤝 Handshake endpoint accessed - initiating handshakes...");
+      try {
+        const { mcdonaldsDid, pizzahutDid } = req.body;
+
+        if (!mcdonaldsDid || !pizzahutDid) {
+          return res.status(400).json({ error: "Missing required DIDs" });
+        }
+
+        // Get the plugin tools
+        const tools = zkredAgentIdPlugin.tools({});
+        const initiateHandshakeTool = tools.find(
+          (tool: any) => tool.method === "initiate_agent_handshake"
+        );
+        const completeHandshakeTool = tools.find(
+          (tool: any) => tool.method === "complete_agent_handshake"
+        );
+
+        if (!initiateHandshakeTool || !completeHandshakeTool) {
+          throw new Error("Handshake tools not found");
+        }
+
+        // Get Zomato's DID and private key from environment
+        const zomatoDid = process.env.ZOMATO_DID;
+        const zomatoPrivateKey = process.env.ZOMATO_PRIVATE_KEY;
+        const zomatoChainId = 296;
+
+        if (!zomatoDid || !zomatoPrivateKey) {
+          return res
+            .status(500)
+            .json({ error: "Zomato credentials not configured" });
+        }
+
+        const results = [];
+
+        // Initiate handshake with McDonald's
+        console.log(
+          `🤝 Initiating handshake with McDonald's (DID: ${mcdonaldsDid})...`
+        );
+        try {
+          const mcdonaldsHandshake = await initiateHandshakeTool.execute(
+            null, // client
+            {}, // context
+            {
+              initiatorDid: zomatoDid,
+              initiatorChainId: zomatoChainId,
+              receiverDid: mcdonaldsDid,
+              receiverChainId: 296,
+            }
+          );
+
+          if (mcdonaldsHandshake.success) {
+            const mcdonaldsComplete = await completeHandshakeTool.execute(
+              null, // client
+              {}, // context
+              {
+                privateKey: zomatoPrivateKey,
+                sessionId:
+                  mcdonaldsHandshake.data.handshake.sessionId.toString(),
+                receiverAgentCallbackEndPoint:
+                  mcdonaldsHandshake.data.handshake
+                    .receiverAgentCallbackEndPoint,
+                challenge: mcdonaldsHandshake.data.handshake.challenge,
+              }
+            );
+
+            const mcdonaldsSessionId =
+              mcdonaldsHandshake.data.handshake.sessionId;
+            const mcdonaldsSuccess =
+              mcdonaldsComplete.success &&
+              mcdonaldsComplete.data?.handshakeCompleted;
+
+            console.log(
+              `🤝 McDonald's handshake completed! Session ID: ${mcdonaldsSessionId}`
+            );
+
+            results.push({
+              agent: "McDonald's",
+              sessionId: mcdonaldsSessionId,
+              success: mcdonaldsSuccess,
+            });
+          }
+        } catch (error) {
+          console.error("McDonald's handshake failed:", error);
+          results.push({
+            agent: "McDonald's",
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error",
+          });
+        }
+
+        // Initiate handshake with Pizza Hut
+        console.log(
+          `🤝 Initiating handshake with Pizza Hut (DID: ${pizzahutDid})...`
+        );
+        try {
+          const pizzahutHandshake = await initiateHandshakeTool.execute(
+            null, // client
+            {}, // context
+            {
+              initiatorDid: zomatoDid,
+              initiatorChainId: zomatoChainId,
+              receiverDid: pizzahutDid,
+              receiverChainId: 296,
+            }
+          );
+
+          if (pizzahutHandshake.success) {
+            const pizzahutComplete = await completeHandshakeTool.execute(
+              null, // client
+              {}, // context
+              {
+                privateKey: zomatoPrivateKey,
+                sessionId:
+                  pizzahutHandshake.data.handshake.sessionId.toString(),
+                receiverAgentCallbackEndPoint:
+                  pizzahutHandshake.data.handshake
+                    .receiverAgentCallbackEndPoint,
+                challenge: pizzahutHandshake.data.handshake.challenge,
+              }
+            );
+
+            const pizzahutSessionId =
+              pizzahutHandshake.data.handshake.sessionId;
+            const pizzahutSuccess =
+              pizzahutComplete.success &&
+              pizzahutComplete.data?.handshakeCompleted;
+
+            console.log(
+              `🤝 Pizza Hut handshake completed! Session ID: ${pizzahutSessionId}`
+            );
+
+            results.push({
+              agent: "Pizza Hut",
+              sessionId: pizzahutSessionId,
+              success: pizzahutSuccess,
+            });
+          }
+        } catch (error) {
+          console.error("Pizza Hut handshake failed:", error);
+          results.push({
+            agent: "Pizza Hut",
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error",
+          });
+        }
+
+        res.json({
+          data: {
+            results,
+            timestamp: Date.now(),
+            message:
+              "Handshakes completed. Use session IDs in x-session-id header for authenticated communication.",
+          },
+        });
+      } catch (error) {
+        console.error("Error in /initiateHandshake:", error);
+        res.status(500).json({ error: "Failed to initiate handshakes" });
+      }
+    });
+
     // Main message endpoint (REST API - keep for backward compatibility)
     this.app.post("/message", async (req: any, res: any) => {
       try {
@@ -298,6 +462,10 @@ export class SimpleA2AServer {
       console.log(`   - Menu browsing and item details`);
       console.log(`   - Order placement and tracking`);
       console.log(`   - Secure payments via Hedera blockchain`);
+      console.log(`🤝 Handshake Capabilities:`);
+      console.log(
+        `   - POST http://localhost:${port}/initiateHandshake - Initiate handshakes with other agents`
+      );
     });
   }
 

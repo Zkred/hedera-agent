@@ -81,6 +81,18 @@ export const createHederaAgentCard = async (): Promise<ExtendedAgentCard> => {
           "Provide customer support and assistance with food delivery queries",
         tags: ["support", "chat", "assistance", "help"],
       },
+      {
+        id: "handshake",
+        name: "Agent Handshake",
+        description:
+          "Initiate and complete secure handshakes with other agents for authenticated communication",
+        tags: [
+          "handshake",
+          "authentication",
+          "security",
+          "agent-communication",
+        ],
+      },
     ],
     capabilities: {
       streaming: true,
@@ -142,6 +154,13 @@ export const hederaAgentCard: AgentCard = {
       description:
         "Provide customer support and assistance with food delivery queries",
       tags: ["support", "chat", "assistance", "help"],
+    },
+    {
+      id: "handshake",
+      name: "Agent Handshake",
+      description:
+        "Initiate and complete secure handshakes with other agents for authenticated communication",
+      tags: ["handshake", "authentication", "security", "agent-communication"],
     },
   ],
   capabilities: {

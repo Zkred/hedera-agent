@@ -1,6 +1,7 @@
 import { tool } from "langchain";
 import { z } from "zod";
 import { SimpleA2AClient } from "../simpleA2AClient";
+import { zkredAgentIdPlugin } from "@zkred/hedera-agentid-plugin";
 
 /**
  * Tool for integrating with Pizza Hut agent
@@ -11,8 +12,143 @@ import { SimpleA2AClient } from "../simpleA2AClient";
 export const pizzaHutIntegrationTool = tool(
   async (args: { message: string }): Promise<string> => {
     try {
-      // Pizza Hut agent runs on port 3001
+      // Get environment variables
+      const zomatoPrivateKey = process.env.HEDERA_PRIVATE_KEY;
+      const zomatoChainId = 296;
+
+      if (!zomatoPrivateKey) {
+        throw new Error(
+          "Missing required environment variable: ZOMATO_PRIVATE_KEY"
+        );
+      }
+
+      // Get Zomato's DID from agent card
+      const zomatoClient = new SimpleA2AClient("http://localhost:3000");
+      const zomatoAgentCard = await zomatoClient.getAgentCard();
+      const zomatoDid = zomatoAgentCard.chainConfig?.did;
+
+      if (!zomatoDid) {
+        throw new Error("Zomato DID not found in agent card");
+      }
+
+      // Get Pizza Hut's DID from their agent card
       const pizzaHutClient = new SimpleA2AClient("http://localhost:3001");
+
+      // First check if Pizza Hut agent is running
+      try {
+        const healthResponse = await fetch("http://localhost:3001/health");
+        const healthData = await healthResponse.json();
+        console.log("Pizza Hut Health Check:", healthData);
+      } catch (error) {
+        console.error(
+          "Pizza Hut agent is not running or not accessible:",
+          error
+        );
+        throw new Error("Pizza Hut agent is not running on port 3001");
+      }
+
+      const pizzahutAgentCard = await pizzaHutClient.getAgentCard();
+      const pizzahutDid = pizzahutAgentCard.chainConfig?.did;
+      const pizzahutServiceEndpoint =
+        pizzahutAgentCard.chainConfig?.serviceEndpoint;
+
+      console.log("Pizza Hut DID:", pizzahutDid);
+      console.log("Pizza Hut Service Endpoint:", pizzahutServiceEndpoint);
+
+      // Test if the /initiate endpoint exists
+      try {
+        const initiateTestResponse = await fetch(
+          "http://localhost:3001/initiate",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ test: true }),
+          }
+        );
+        console.log(
+          "Pizza Hut /initiate endpoint test status:",
+          initiateTestResponse.status
+        );
+      } catch (error) {
+        console.error("Pizza Hut /initiate endpoint test failed:", error);
+      }
+
+      console.log(
+        "Pizza Hut Agent Card:",
+        JSON.stringify(pizzahutAgentCard, null, 2)
+      );
+
+      if (!pizzahutDid) {
+        throw new Error("Pizza Hut DID not found in agent card");
+      }
+
+      // Get plugin tools
+      const tools = zkredAgentIdPlugin.tools({});
+      const initiateHandshakeTool = tools.find(
+        (tool: any) => tool.method === "initiate_agent_handshake"
+      );
+      const completeHandshakeTool = tools.find(
+        (tool: any) => tool.method === "complete_agent_handshake"
+      );
+
+      if (!initiateHandshakeTool || !completeHandshakeTool) {
+        throw new Error("Handshake tools not found");
+      }
+
+      // Establish handshake with Pizza Hut
+      console.log(
+        `🤝 Initiating handshake with Pizza Hut (DID: ${pizzahutDid})...`
+      );
+      console.log("Handshake parameters:", {
+        initiatorDid: zomatoDid,
+        initiatorChainId: zomatoChainId,
+        receiverDid: pizzahutDid,
+        receiverChainId: 296,
+      });
+
+      const pizzahutHandshake = await initiateHandshakeTool.execute(
+        null, // client
+        {}, // context
+        {
+          initiatorDid: zomatoDid,
+          initiatorChainId: zomatoChainId,
+          receiverDid: pizzahutDid,
+          receiverChainId: 296,
+        }
+      );
+
+      console.log("Pizza Hut handshake result:", pizzahutHandshake);
+      console.log("Handshake error details:", pizzahutHandshake.error);
+
+      if (!pizzahutHandshake.success) {
+        throw new Error(
+          `Failed to initiate handshake with Pizza Hut: ${
+            pizzahutHandshake.error || "Unknown error"
+          }`
+        );
+      }
+
+      const pizzahutComplete = await completeHandshakeTool.execute(
+        null, // client
+        {}, // context
+        {
+          privateKey: zomatoPrivateKey,
+          sessionId: pizzahutHandshake.data.handshake.sessionId.toString(),
+          receiverAgentCallbackEndPoint:
+            pizzahutHandshake.data.handshake.receiverAgentCallbackEndPoint,
+          challenge: pizzahutHandshake.data.handshake.challenge,
+        }
+      );
+
+      if (
+        !pizzahutComplete.success ||
+        !pizzahutComplete.data?.handshakeCompleted
+      ) {
+        throw new Error("Failed to complete handshake with Pizza Hut");
+      }
+
+      const sessionId = pizzahutHandshake.data.handshake.sessionId;
+      console.log(`🤝 Pizza Hut handshake completed! Session ID: ${sessionId}`);
 
       console.log(`🍕 Sending message to Pizza Hut agent: ${args.message}`);
 
@@ -27,7 +163,10 @@ export const pizzaHutIntegrationTool = tool(
         );
       });
 
-      const responsePromise = pizzaHutClient.sendMessage(args.message);
+      const responsePromise = pizzaHutClient.sendMessage(
+        args.message,
+        sessionId.toString()
+      );
       const response = await Promise.race([responsePromise, timeoutPromise]);
 
       console.log(`🍕 Pizza Hut agent response: ${response}`);
