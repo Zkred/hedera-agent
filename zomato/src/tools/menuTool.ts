@@ -1,4 +1,4 @@
-import { tool } from "@langchain/core/tools";
+import { tool } from "langchain";
 import { z } from "zod";
 import { Menu, MenuItem, MenuRequest, MenuResponse } from "../types";
 
@@ -14,7 +14,7 @@ const mockMenus: { [restaurantId: string]: Menu } = {
         name: "Margherita Pizza",
         description:
           "Classic pizza with tomato sauce, mozzarella, and fresh basil",
-        price: 14.99,
+        price: 1.0, // 1 HBAR
         category: "Pizza",
         isAvailable: true,
         imageUrl: "https://example.com/margherita.jpg",
@@ -25,7 +25,7 @@ const mockMenus: { [restaurantId: string]: Menu } = {
         id: "item_002",
         name: "Pepperoni Pizza",
         description: "Traditional pizza topped with pepperoni and mozzarella",
-        price: 16.99,
+        price: 1.2, // 1.2 HBAR
         category: "Pizza",
         isAvailable: true,
         imageUrl: "https://example.com/pepperoni.jpg",

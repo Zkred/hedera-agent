@@ -1,5 +1,5 @@
 /**
- * Main server file with A2A (Agent-to-Agent) integration
+ * Main server file with A2A (Agent-to-Agent) integration for McDonald's Agent
  *
  * This server provides:
  * - REST API endpoints for backward compatibility
@@ -20,17 +20,15 @@ dotenv.config();
 
 import { SimpleA2AServer } from "./simpleA2AServer";
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 
 function startServer() {
   try {
-    console.log(
-      "🍕 Starting Zomato Food Delivery Agent with A2A Integration..."
-    );
+    console.log("🍟 Starting McDonald's Agent with A2A Integration...");
     const server = new SimpleA2AServer();
     server.start(parseInt(PORT.toString()));
   } catch (error) {
-    console.error("❌ Failed to start server:", error);
+    console.error("❌ Failed to start McDonald's server:", error);
     process.exit(1);
   }
 }

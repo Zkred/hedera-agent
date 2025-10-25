@@ -1,5 +1,5 @@
 /**
- * Simple A2A-compatible server implementation
+ * Simple A2A-compatible server implementation for McDonald's Agent
  *
  * This server implements the A2A (Agent-to-Agent) protocol without external SDK dependencies.
  * It provides a clean, self-contained implementation that supports:
@@ -22,8 +22,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
-import { HederaAgentService } from "./services/hederaAgent";
-import { hederaAgentCard, createHederaAgentCard } from "./agentCard";
+import { McDonaldsAgentService } from "./services/mcDonaldsAgent";
+import { mcdonaldsAgentCard, createMcDonaldsAgentCard } from "./agentCard";
 
 export class SimpleA2AServer {
   private app: any;
@@ -31,7 +31,7 @@ export class SimpleA2AServer {
 
   constructor() {
     this.app = express();
-    this.agentService = new HederaAgentService();
+    this.agentService = new McDonaldsAgentService();
     this.setupMiddleware();
     this.setupRoutes();
   }
@@ -45,12 +45,13 @@ export class SimpleA2AServer {
     this.app.get("/health", (req: any, res: any) => {
       const response = {
         status: "OK",
-        message: "Zomato Food Delivery Agent API is running",
+        message: "McDonald's Agent API is running",
         a2aEnabled: true,
         capabilities: [
-          "restaurant-discovery",
-          "menu-browsing",
-          "order-placement",
+          "combo-meals",
+          "drive-thru",
+          "nutritional-info",
+          "mc-delivery-rewards",
           "order-tracking",
           "hedera-operations",
         ],
@@ -61,11 +62,11 @@ export class SimpleA2AServer {
     // A2A Agent Card endpoint
     this.app.get("/.well-known/agent-card.json", async (req: any, res: any) => {
       try {
-        const agentCard = await createHederaAgentCard();
+        const agentCard = await createMcDonaldsAgentCard();
         res.json(agentCard);
       } catch (error) {
-        console.error("Error generating agent card:", error);
-        res.json(hederaAgentCard); // Fallback to static card
+        console.error("Error generating McDonald's agent card:", error);
+        res.json(mcdonaldsAgentCard); // Fallback to static card
       }
     });
 
@@ -87,9 +88,9 @@ export class SimpleA2AServer {
         );
         const messageText = textParts.map((part: any) => part.text).join(" ");
 
-        console.log(`[A2A] Processing message: ${messageText}`);
+        console.log(`[A2A] Processing McDonald's message: ${messageText}`);
 
-        // Process with Hedera agent
+        // Process with McDonald's agent
         const result = await this.agentService.processMessage(messageText);
 
         // Create A2A-compatible response
@@ -147,7 +148,9 @@ export class SimpleA2AServer {
         );
         const messageText = textParts.map((part: any) => part.text).join(" ");
 
-        console.log(`[A2A Stream] Processing message: ${messageText}`);
+        console.log(
+          `[A2A Stream] Processing McDonald's message: ${messageText}`
+        );
 
         // Send initial task event
         const taskId = this.generateUUID();
@@ -177,7 +180,7 @@ export class SimpleA2AServer {
           })}\n\n`
         );
 
-        // Process with Hedera agent
+        // Process with McDonald's agent
         const result = await this.agentService.processMessage(messageText);
 
         // Send response message
@@ -229,9 +232,9 @@ export class SimpleA2AServer {
           });
         }
 
-        console.log("Processing message:", message);
+        console.log("Processing McDonald's message:", message);
         const result = await this.agentService.processMessage(message);
-        console.log("Response generated successfully");
+        console.log("McDonald's response generated successfully");
 
         const response = {
           response: result.content,
@@ -239,7 +242,7 @@ export class SimpleA2AServer {
         };
         res.json(response);
       } catch (error) {
-        console.error("Error processing message:", error);
+        console.error("Error processing McDonald's message:", error);
         const errorResponse = {
           error: "Error processing message",
           details: error instanceof Error ? error.message : "Unknown error",
@@ -249,11 +252,9 @@ export class SimpleA2AServer {
     });
   }
 
-  start(port: number = 3000) {
+  start(port: number = 3002) {
     this.app.listen(port, () => {
-      console.log(
-        `🍕 Zomato Food Delivery Agent API server running on port ${port}`
-      );
+      console.log(`🍟 McDonald's Agent API server running on port ${port}`);
       console.log(`📡 Health check: http://localhost:${port}/health`);
       console.log(`💬 Message endpoint: http://localhost:${port}/message`);
       console.log(
@@ -262,10 +263,11 @@ export class SimpleA2AServer {
       console.log(`🔗 A2A Protocol endpoints:`);
       console.log(`   - POST http://localhost:${port}/a2a/sendMessage`);
       console.log(`   - POST http://localhost:${port}/a2a/sendMessageStream`);
-      console.log(`🍽️  Food Delivery Capabilities:`);
-      console.log(`   - Restaurant discovery and search`);
-      console.log(`   - Menu browsing and item details`);
-      console.log(`   - Order placement and tracking`);
+      console.log(`🍟 McDonald's Capabilities:`);
+      console.log(`   - Combo meal creation and management`);
+      console.log(`   - Drive-thru slot reservations`);
+      console.log(`   - Nutritional information lookup`);
+      console.log(`   - McDelivery rewards and points`);
       console.log(`   - Secure payments via Hedera blockchain`);
     });
   }

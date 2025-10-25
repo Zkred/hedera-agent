@@ -1,5 +1,5 @@
 /**
- * Simple A2A-compatible server implementation
+ * Simple A2A-compatible server implementation for Pizza Hut Agent
  *
  * This server implements the A2A (Agent-to-Agent) protocol without external SDK dependencies.
  * It provides a clean, self-contained implementation that supports:
@@ -22,8 +22,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import express from "express";
-import { HederaAgentService } from "./services/hederaAgent";
-import { hederaAgentCard, createHederaAgentCard } from "./agentCard";
+import { PizzaHutAgentService } from "./services/pizzaHutAgent";
+import { pizzaHutAgentCard, createPizzaHutAgentCard } from "./agentCard";
 
 export class SimpleA2AServer {
   private app: any;
@@ -31,7 +31,7 @@ export class SimpleA2AServer {
 
   constructor() {
     this.app = express();
-    this.agentService = new HederaAgentService();
+    this.agentService = new PizzaHutAgentService();
     this.setupMiddleware();
     this.setupRoutes();
   }
@@ -45,12 +45,12 @@ export class SimpleA2AServer {
     this.app.get("/health", (req: any, res: any) => {
       const response = {
         status: "OK",
-        message: "Zomato Food Delivery Agent API is running",
+        message: "Pizza Hut Agent API is running",
         a2aEnabled: true,
         capabilities: [
-          "restaurant-discovery",
-          "menu-browsing",
-          "order-placement",
+          "pizza-customization",
+          "loyalty-program",
+          "promo-management",
           "order-tracking",
           "hedera-operations",
         ],
@@ -61,11 +61,11 @@ export class SimpleA2AServer {
     // A2A Agent Card endpoint
     this.app.get("/.well-known/agent-card.json", async (req: any, res: any) => {
       try {
-        const agentCard = await createHederaAgentCard();
+        const agentCard = await createPizzaHutAgentCard();
         res.json(agentCard);
       } catch (error) {
-        console.error("Error generating agent card:", error);
-        res.json(hederaAgentCard); // Fallback to static card
+        console.error("Error generating Pizza Hut agent card:", error);
+        res.json(pizzaHutAgentCard); // Fallback to static card
       }
     });
 
@@ -87,9 +87,9 @@ export class SimpleA2AServer {
         );
         const messageText = textParts.map((part: any) => part.text).join(" ");
 
-        console.log(`[A2A] Processing message: ${messageText}`);
+        console.log(`[A2A] Processing Pizza Hut message: ${messageText}`);
 
-        // Process with Hedera agent
+        // Process with Pizza Hut agent
         const result = await this.agentService.processMessage(messageText);
 
         // Create A2A-compatible response
@@ -147,7 +147,9 @@ export class SimpleA2AServer {
         );
         const messageText = textParts.map((part: any) => part.text).join(" ");
 
-        console.log(`[A2A Stream] Processing message: ${messageText}`);
+        console.log(
+          `[A2A Stream] Processing Pizza Hut message: ${messageText}`
+        );
 
         // Send initial task event
         const taskId = this.generateUUID();
@@ -177,7 +179,7 @@ export class SimpleA2AServer {
           })}\n\n`
         );
 
-        // Process with Hedera agent
+        // Process with Pizza Hut agent
         const result = await this.agentService.processMessage(messageText);
 
         // Send response message
@@ -229,9 +231,9 @@ export class SimpleA2AServer {
           });
         }
 
-        console.log("Processing message:", message);
+        console.log("Processing Pizza Hut message:", message);
         const result = await this.agentService.processMessage(message);
-        console.log("Response generated successfully");
+        console.log("Pizza Hut response generated successfully");
 
         const response = {
           response: result.content,
@@ -239,7 +241,7 @@ export class SimpleA2AServer {
         };
         res.json(response);
       } catch (error) {
-        console.error("Error processing message:", error);
+        console.error("Error processing Pizza Hut message:", error);
         const errorResponse = {
           error: "Error processing message",
           details: error instanceof Error ? error.message : "Unknown error",
@@ -249,11 +251,9 @@ export class SimpleA2AServer {
     });
   }
 
-  start(port: number = 3000) {
+  start(port: number = 3001) {
     this.app.listen(port, () => {
-      console.log(
-        `🍕 Zomato Food Delivery Agent API server running on port ${port}`
-      );
+      console.log(`🍕 Pizza Hut Agent API server running on port ${port}`);
       console.log(`📡 Health check: http://localhost:${port}/health`);
       console.log(`💬 Message endpoint: http://localhost:${port}/message`);
       console.log(
@@ -262,10 +262,11 @@ export class SimpleA2AServer {
       console.log(`🔗 A2A Protocol endpoints:`);
       console.log(`   - POST http://localhost:${port}/a2a/sendMessage`);
       console.log(`   - POST http://localhost:${port}/a2a/sendMessageStream`);
-      console.log(`🍽️  Food Delivery Capabilities:`);
-      console.log(`   - Restaurant discovery and search`);
-      console.log(`   - Menu browsing and item details`);
-      console.log(`   - Order placement and tracking`);
+      console.log(`🍕 Pizza Hut Capabilities:`);
+      console.log(`   - Custom pizza creation and ordering`);
+      console.log(`   - Loyalty points and rewards management`);
+      console.log(`   - Promotional codes and discounts`);
+      console.log(`   - Order tracking and delivery updates`);
       console.log(`   - Secure payments via Hedera blockchain`);
     });
   }

@@ -1,4 +1,4 @@
-import { tool } from "@langchain/core/tools";
+import { tool } from "langchain";
 import { z } from "zod";
 import {
   Restaurant,
@@ -15,8 +15,8 @@ const mockRestaurants: Restaurant[] = [
     cuisine: ["Italian", "Pizza"],
     rating: 4.5,
     deliveryTime: "25-35 mins",
-    deliveryFee: 2.99,
-    minimumOrder: 15.0,
+    deliveryFee: 0.1, // 0.1 HBAR
+    minimumOrder: 1.0, // 1 HBAR
     location: {
       latitude: 40.7128,
       longitude: -74.006,
@@ -33,8 +33,8 @@ const mockRestaurants: Restaurant[] = [
     cuisine: ["American", "Burgers"],
     rating: 4.2,
     deliveryTime: "20-30 mins",
-    deliveryFee: 1.99,
-    minimumOrder: 12.0,
+    deliveryFee: 0.08, // 0.08 HBAR
+    minimumOrder: 0.8, // 0.8 HBAR
     location: {
       latitude: 40.7589,
       longitude: -73.9851,
@@ -51,8 +51,8 @@ const mockRestaurants: Restaurant[] = [
     cuisine: ["Japanese", "Sushi"],
     rating: 4.7,
     deliveryTime: "30-40 mins",
-    deliveryFee: 3.99,
-    minimumOrder: 20.0,
+    deliveryFee: 0.12, // 0.12 HBAR
+    minimumOrder: 1.2, // 1.2 HBAR
     location: {
       latitude: 40.7505,
       longitude: -73.9934,
@@ -69,8 +69,8 @@ const mockRestaurants: Restaurant[] = [
     cuisine: ["Mexican", "Tacos"],
     rating: 4.0,
     deliveryTime: "15-25 mins",
-    deliveryFee: 1.5,
-    minimumOrder: 10.0,
+    deliveryFee: 0.06, // 0.06 HBAR
+    minimumOrder: 0.6, // 0.6 HBAR
     location: {
       latitude: 40.7614,
       longitude: -73.9776,

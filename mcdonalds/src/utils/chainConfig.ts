@@ -44,8 +44,8 @@ export class ChainConfigManager {
     const config: ChainConfig = {
       agentId: "",
       chainId: 296, // Hedera Testnet
-      description: "Zomato Food Delivery Agent",
-      serviceEndpoint: process.env.AGENT_URL || "http://localhost:3000/",
+      description: "McDonald's Delivery Agent",
+      serviceEndpoint: process.env.AGENT_URL || "http://localhost:3002/",
       publicKey: "",
       registeredAt: new Date().toISOString(),
       did: "",
