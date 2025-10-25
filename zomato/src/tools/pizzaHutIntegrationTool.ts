@@ -133,21 +133,23 @@ export const pizzaHutIntegrationTool = tool(
         {}, // context
         {
           privateKey: zomatoPrivateKey,
-          sessionId: pizzahutHandshake.data.handshake.sessionId.toString(),
-          receiverAgentCallbackEndPoint:
-            pizzahutHandshake.data.handshake.receiverAgentCallbackEndPoint,
-          challenge: pizzahutHandshake.data.handshake.challenge,
+          sessionId: pizzahutHandshake.handshake.sessionId.toString(),
+          receiverAgentCallbackEndPoint: `${pizzahutServiceEndpoint}completeHandshake`,
+          challenge: pizzahutHandshake.handshake.challenge,
         }
       );
 
-      if (
-        !pizzahutComplete.success ||
-        !pizzahutComplete.data?.handshakeCompleted
-      ) {
+      console.log("🔍 Pizza Hut complete handshake result:", pizzahutComplete);
+
+      if (!pizzahutComplete.success || !pizzahutComplete.handshakeCompleted) {
+        console.error("❌ Pizza Hut handshake completion failed:", {
+          success: pizzahutComplete.success,
+          handshakeCompleted: pizzahutComplete.handshakeCompleted,
+        });
         throw new Error("Failed to complete handshake with Pizza Hut");
       }
 
-      const sessionId = pizzahutHandshake.data.handshake.sessionId;
+      const sessionId = pizzahutHandshake.handshake.sessionId;
       console.log(`🤝 Pizza Hut handshake completed! Session ID: ${sessionId}`);
 
       console.log(`🍕 Sending message to Pizza Hut agent: ${args.message}`);

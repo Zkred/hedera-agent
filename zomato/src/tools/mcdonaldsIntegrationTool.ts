@@ -84,21 +84,26 @@ export const mcdonaldsIntegrationTool = tool(
         {}, // context
         {
           privateKey: zomatoPrivateKey,
-          sessionId: mcdonaldsHandshake.data.handshake.sessionId.toString(),
-          receiverAgentCallbackEndPoint:
-            mcdonaldsHandshake.data.handshake.receiverAgentCallbackEndPoint,
-          challenge: mcdonaldsHandshake.data.handshake.challenge,
+          sessionId: mcdonaldsHandshake.handshake.sessionId.toString(),
+          receiverAgentCallbackEndPoint: `${mcdonaldsAgentCard.chainConfig?.serviceEndpoint}completeHandshake`,
+          challenge: mcdonaldsHandshake.handshake.challenge,
         }
       );
 
-      if (
-        !mcdonaldsComplete.success ||
-        !mcdonaldsComplete.data?.handshakeCompleted
-      ) {
+      console.log(
+        "🔍 McDonald's complete handshake result:",
+        mcdonaldsComplete
+      );
+
+      if (!mcdonaldsComplete.success || !mcdonaldsComplete.handshakeCompleted) {
+        console.error("❌ McDonald's handshake completion failed:", {
+          success: mcdonaldsComplete.success,
+          handshakeCompleted: mcdonaldsComplete.handshakeCompleted,
+        });
         throw new Error("Failed to complete handshake with McDonald's");
       }
 
-      const sessionId = mcdonaldsHandshake.data.handshake.sessionId;
+      const sessionId = mcdonaldsHandshake.handshake.sessionId;
       console.log(
         `🤝 McDonald's handshake completed! Session ID: ${sessionId}`
       );

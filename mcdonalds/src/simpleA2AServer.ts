@@ -268,7 +268,11 @@ export class SimpleA2AServer {
     // Handshake endpoints
     this.app.post("/initiate", async (req: any, res: any) => {
       try {
+        console.log("Received initiate request:", req.body);
         const { sessionId, initiatorDid, initiatorChainId } = req.body;
+        console.log("Session ID:", sessionId);
+        console.log("Initiator DID:", initiatorDid);
+        console.log("Initiator Chain ID:", initiatorChainId);
 
         if (!sessionId || !initiatorDid || !initiatorChainId) {
           return res.status(400).json({ error: "Missing required fields" });
@@ -303,7 +307,7 @@ export class SimpleA2AServer {
           initiatorDid,
           challenge: responderChallenge,
           timestamp: Date.now(),
-          did: didInformation.data,
+          did: didInformation.data.did,
         });
 
         res.json({
@@ -320,13 +324,16 @@ export class SimpleA2AServer {
 
     this.app.post("/completeHandshake", async (req: any, res: any) => {
       try {
+        console.log("Received complete handshake request:", req.body);
         const { sessionId, signature } = req.body;
-
+        console.log("Printing session id Session ID:", sessionId);
+        console.log("Signature:", signature);
         if (!sessionId || !signature) {
           return res.status(400).json({ error: "Missing required fields" });
         }
 
-        const session = this.sessions.get(sessionId.toString());
+        const session = this.sessions.get(sessionId);
+        console.log("Session:", session);
         if (!session) {
           return res.status(404).json({ error: "Session not found" });
         }
@@ -352,8 +359,10 @@ export class SimpleA2AServer {
             did: session.did,
           }
         );
+        console.log("Complete handshake validation result:", isValid.success);
+        console.log("Complete handshake validation data:", isValid);
 
-        if (!isValid.success || !isValid.data) {
+        if (!isValid.success || !isValid.isValid) {
           return res.status(401).json({ error: "Invalid signature" });
         }
 
@@ -361,6 +370,7 @@ export class SimpleA2AServer {
         session.verified = true;
         session.initiatorPublicKey = session.did;
 
+        console.log("Complete handshake successful");
         res.json({
           data: {
             sessionId,

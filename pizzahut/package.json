@@ -5,7 +5,7 @@
     "@langchain/core": "^1.0.1",
     "@langchain/openai": "^1.0.0",
     "@types/node-fetch": "^2.6.13",
-    "@zkred/hedera-agentid-plugin": "^2.0.1",
+    "@zkred/hedera-agentid-plugin": "^2.0.3",
     "dotenv": "^17.2.3",
     "express": "^4.18.2",
     "hedera-agent-kit": "^3.4.0",
