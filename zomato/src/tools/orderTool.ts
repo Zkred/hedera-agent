@@ -10,6 +10,8 @@ import {
   DeliveryUpdate,
   OrderItem,
 } from "../types";
+import { processPaymentTool } from "./paymentTool";
+import { processAgentPaymentTool } from "./agentPaymentTool";
 
 // Mock order storage (in a real app, this would be a database)
 let mockOrders: Order[] = [];
@@ -57,7 +59,13 @@ const mockMenuItems: { [key: string]: { price: number; name: string } } = {
 };
 
 export const placeOrderTool = tool(
-  async (args: OrderRequest): Promise<string> => {
+  async (
+    args: OrderRequest & {
+      userPrivateKey?: string;
+      partnerRestaurant?: string;
+      partnerOrderId?: string;
+    }
+  ): Promise<string> => {
     try {
       // Validate restaurant exists
       const restaurant = mockRestaurants.find(
@@ -125,15 +133,79 @@ export const placeOrderTool = tool(
         deliveryAddress: args.deliveryAddress,
         paymentMethod: args.paymentMethod,
         specialInstructions: args.specialInstructions,
+        partnerRestaurant: args.partnerRestaurant,
+        partnerOrderId: args.partnerOrderId,
       };
 
       // Store order
       mockOrders.push(order);
 
+      // Process payment using agent-to-agent payment system
+      let paymentResult = null;
+      if (args.paymentMethod === "crypto") {
+        try {
+          console.log(
+            "💳 Processing agent-to-agent payment for order:",
+            order.id
+          );
+
+          // Convert USD to HBAR (simplified conversion rate)
+          const hbarAmount = totalAmount * 0.1; // 1 USD = 0.1 HBAR (example rate)
+
+          // Determine partner agent URL based on restaurant
+          let partnerAgentUrl = null;
+          if (args.partnerRestaurant === "Pizza Hut") {
+            partnerAgentUrl = "http://localhost:3001";
+          } else if (args.partnerRestaurant === "McDonald's") {
+            partnerAgentUrl = "http://localhost:3002";
+          } else {
+            // Default to Pizza Hut for regular restaurants
+            partnerAgentUrl = "http://localhost:3001";
+          }
+
+          console.log(
+            `🤝 Sending payment to partner agent: ${partnerAgentUrl}`
+          );
+
+          const paymentResponse = await processAgentPaymentTool.invoke({
+            orderId: order.id,
+            amount: hbarAmount,
+            partnerAgentUrl: partnerAgentUrl,
+            memo: `Agent-to-agent payment for order ${order.id} at ${restaurant.name}`,
+          });
+
+          const paymentData = JSON.parse(paymentResponse);
+          if (paymentData.success) {
+            paymentResult = paymentData;
+            order.status = OrderStatus.CONFIRMED;
+            console.log("✅ Agent-to-agent payment processed successfully");
+          } else {
+            console.error("❌ Agent payment failed:", paymentData.error);
+            return JSON.stringify({
+              error: "Agent payment processing failed",
+              details: paymentData.error,
+              order: order,
+            });
+          }
+        } catch (paymentError) {
+          console.error("Agent payment processing error:", paymentError);
+          return JSON.stringify({
+            error: "Agent payment processing failed",
+            details:
+              paymentError instanceof Error
+                ? paymentError.message
+                : "Unknown payment error",
+            order: order,
+          });
+        }
+      }
+
       const response: OrderResponse = {
         order: order,
         success: true,
         message: "Order placed successfully",
+        payment: paymentResult,
+        partnerOrderId: args.partnerOrderId,
       };
 
       return JSON.stringify(response);
@@ -147,7 +219,7 @@ export const placeOrderTool = tool(
   {
     name: "place_order",
     description:
-      "Place a food order with a restaurant. Validates order items, calculates total cost including tax and delivery fee, and creates the order",
+      "Place a food order with a restaurant. Validates order items, calculates total cost including tax and delivery fee, processes payment if private key provided, and creates the order. Supports partner restaurant integration with Pizza Hut and McDonald's.",
     schema: z.object({
       restaurantId: z
         .string()
@@ -179,6 +251,20 @@ export const placeOrderTool = tool(
         .string()
         .optional()
         .describe("Special delivery instructions"),
+      userPrivateKey: z
+        .string()
+        .optional()
+        .describe(
+          "User's private key for crypto payments (deprecated - now uses agent-to-agent payments)"
+        ),
+      partnerRestaurant: z
+        .string()
+        .optional()
+        .describe("Partner restaurant name (e.g., 'Pizza Hut', 'McDonald's')"),
+      partnerOrderId: z
+        .string()
+        .optional()
+        .describe("Order ID from partner restaurant (Pizza Hut/McDonald's)"),
     }),
   }
 );

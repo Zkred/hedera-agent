@@ -11,7 +11,7 @@ import { SimpleA2AClient } from "../simpleA2AClient";
 export const pizzaHutIntegrationTool = tool(
   async (args: { message: string }): Promise<string> => {
     try {
-      // Pizza Hut agent typically runs on port 3002
+      // Pizza Hut agent runs on port 3001
       const pizzaHutClient = new SimpleA2AClient("http://localhost:3001");
 
       console.log(`🍕 Sending message to Pizza Hut agent: ${args.message}`);
@@ -32,14 +32,49 @@ export const pizzaHutIntegrationTool = tool(
 
       console.log(`🍕 Pizza Hut agent response: ${response}`);
 
+      // Extract order ID from response if it contains order information
+      let orderId = null;
+      try {
+        const responseObj = JSON.parse(response as string);
+        if (responseObj.orderId) {
+          orderId = responseObj.orderId;
+        } else if (responseObj.order && responseObj.order.id) {
+          orderId = responseObj.order.id;
+        }
+      } catch (e) {
+        // If response is not JSON, try to extract order ID from text
+        if (typeof response === "string") {
+          const orderIdMatch = response.match(
+            /order[_-]?id[:\s]*([a-zA-Z0-9_-]+)/i
+          );
+          if (orderIdMatch) {
+            orderId = orderIdMatch[1];
+          }
+        }
+      }
+
       return JSON.stringify({
         success: true,
         response: response,
         agent: "Pizza Hut",
+        orderId: orderId,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
       console.error("Error communicating with Pizza Hut agent:", error);
+
+      // Check if it's a connection error
+      const isConnectionError =
+        error instanceof Error &&
+        (error.message.includes("ECONNREFUSED") ||
+          error.message.includes("timeout") ||
+          error.message.includes("not responding"));
+
+      if (isConnectionError) {
+        console.log(
+          "🍕 Pizza Hut agent is not running. Please start the Pizza Hut agent on port 3001"
+        );
+      }
 
       // Provide fallback response when Pizza Hut agent is not available
       const fallbackResponse = `I'm sorry, but the Pizza Hut agent is currently not available. However, I can help you with Pizza Hut information directly:
@@ -78,12 +113,12 @@ Would you like to know more about any specific items, create a custom pizza, or 
   {
     name: "pizza_hut_integration",
     description:
-      "Communicate with Pizza Hut agent for pizza orders, customization, loyalty programs, and promotional offers. Use this when users mention Pizza Hut, pizza, offers, loyalty points, or promotional codes.",
+      "Communicate with Pizza Hut agent for pizza customization, menu information, loyalty programs, and promotional offers. This tool gets information from Pizza Hut but does NOT place orders - use Zomato's order system instead.",
     schema: z.object({
       message: z
         .string()
         .describe(
-          "The message to send to Pizza Hut agent. Should be a natural language request for Pizza Hut services like 'I want to create a custom pizza' or 'Check my loyalty points'"
+          "The message to send to Pizza Hut agent. Should be a natural language request for Pizza Hut services like 'I want to customize a pizza' or 'Check my loyalty points'"
         ),
     }),
   }
@@ -95,7 +130,7 @@ Would you like to know more about any specific items, create a custom pizza, or 
 export const getPizzaHutCapabilitiesTool = tool(
   async (): Promise<string> => {
     try {
-      const pizzaHutClient = new SimpleA2AClient("http://localhost:3002");
+      const pizzaHutClient = new SimpleA2AClient("http://localhost:3001");
 
       console.log("🍕 Getting Pizza Hut agent capabilities...");
 

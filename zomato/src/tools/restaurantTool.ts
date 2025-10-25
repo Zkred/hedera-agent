@@ -78,8 +78,118 @@ const mockRestaurants: Restaurant[] = [
       city: "New York",
       zipCode: "10010",
     },
-    isOpen: false,
+    isOpen: true, // Changed to true
     imageUrl: "https://example.com/taco-fiesta.jpg",
+  },
+  // Partner Restaurant Locations
+  {
+    id: "rest_005",
+    name: "Pizza Hut - Times Square",
+    cuisine: ["Pizza", "Italian", "American"],
+    rating: 4.3,
+    deliveryTime: "20-30 mins",
+    deliveryFee: 0.09, // 0.09 HBAR
+    minimumOrder: 0.9, // 0.9 HBAR
+    location: {
+      latitude: 40.758,
+      longitude: -73.9855,
+      address: "123 Main St, New York, NY 10001", // Same as user's address
+      city: "New York",
+      zipCode: "10001",
+    },
+    isOpen: true,
+    imageUrl: "https://example.com/pizza-hut.jpg",
+  },
+  {
+    id: "rest_006",
+    name: "Pizza Hut - Downtown",
+    cuisine: ["Pizza", "Italian", "American"],
+    rating: 4.1,
+    deliveryTime: "25-35 mins",
+    deliveryFee: 0.11, // 0.11 HBAR
+    minimumOrder: 0.8, // 0.8 HBAR
+    location: {
+      latitude: 40.7128,
+      longitude: -74.006,
+      address: "456 Broadway, New York, NY 10013",
+      city: "New York",
+      zipCode: "10013",
+    },
+    isOpen: true,
+    imageUrl: "https://example.com/pizza-hut-downtown.jpg",
+  },
+  {
+    id: "rest_007",
+    name: "McDonald's - Midtown",
+    cuisine: ["American", "Fast Food", "Burgers"],
+    rating: 4.0,
+    deliveryTime: "15-25 mins",
+    deliveryFee: 0.07, // 0.07 HBAR
+    minimumOrder: 0.7, // 0.7 HBAR
+    location: {
+      latitude: 40.7505,
+      longitude: -73.9934,
+      address: "789 5th Ave, New York, NY 10022",
+      city: "New York",
+      zipCode: "10022",
+    },
+    isOpen: true,
+    imageUrl: "https://example.com/mcdonalds.jpg",
+  },
+  {
+    id: "rest_008",
+    name: "McDonald's - Financial District",
+    cuisine: ["American", "Fast Food", "Burgers"],
+    rating: 4.2,
+    deliveryTime: "20-30 mins",
+    deliveryFee: 0.08, // 0.08 HBAR
+    minimumOrder: 0.6, // 0.6 HBAR
+    location: {
+      latitude: 40.7074,
+      longitude: -74.0113,
+      address: "123 Main St, New York, NY 10001", // Same as user's address
+      city: "New York",
+      zipCode: "10001",
+    },
+    isOpen: true,
+    imageUrl: "https://example.com/mcdonalds-financial.jpg",
+  },
+  // Additional restaurants for better coverage
+  {
+    id: "rest_009",
+    name: "Pizza Corner",
+    cuisine: ["Pizza", "Italian"],
+    rating: 4.4,
+    deliveryTime: "25-35 mins",
+    deliveryFee: 0.1, // 0.10 HBAR
+    minimumOrder: 0.9, // 0.9 HBAR
+    location: {
+      latitude: 40.7128,
+      longitude: -74.006,
+      address: "123 Main St, New York, NY 10001", // Same as user's address
+      city: "New York",
+      zipCode: "10001",
+    },
+    isOpen: true,
+    imageUrl: "https://example.com/pizza-corner.jpg",
+  },
+  {
+    id: "rest_010",
+    name: "Burger King - Union Square",
+    cuisine: ["American", "Fast Food", "Burgers"],
+    rating: 3.9,
+    deliveryTime: "20-30 mins",
+    deliveryFee: 0.08, // 0.08 HBAR
+    minimumOrder: 0.8, // 0.8 HBAR
+    location: {
+      latitude: 40.7359,
+      longitude: -73.9911,
+      address: "Union Square, New York, NY 10003",
+      city: "New York",
+      zipCode: "10003",
+    },
+    isOpen: true,
+    imageUrl: "https://example.com/burger-king.jpg",
   },
 ];
 
@@ -129,6 +239,59 @@ export const restaurantSearchTool = tool(
       filteredRestaurants = filteredRestaurants.filter(
         (restaurant) => restaurant.isOpen
       );
+
+      // Fallback: If no restaurants found due to strict filters, return some open restaurants
+      if (filteredRestaurants.length === 0) {
+        console.log(
+          "No restaurants found with current filters, returning fallback restaurants"
+        );
+        filteredRestaurants = mockRestaurants
+          .filter((restaurant) => restaurant.isOpen)
+          .slice(0, 5);
+      }
+
+      // Ensure we always have at least some restaurants
+      if (filteredRestaurants.length === 0) {
+        console.log("No open restaurants found, returning default restaurants");
+        filteredRestaurants = [
+          {
+            id: "rest_fallback_001",
+            name: "Pizza Hut - Always Available",
+            cuisine: ["Pizza", "Italian", "American"],
+            rating: 4.0,
+            deliveryTime: "25-35 mins",
+            deliveryFee: 0.1,
+            minimumOrder: 0.8,
+            location: {
+              latitude: 40.7128,
+              longitude: -74.006,
+              address: "123 Main St, New York, NY 10001",
+              city: "New York",
+              zipCode: "10001",
+            },
+            isOpen: true,
+            imageUrl: "https://example.com/pizza-hut-fallback.jpg",
+          },
+          {
+            id: "rest_fallback_002",
+            name: "McDonald's - Always Available",
+            cuisine: ["American", "Fast Food", "Burgers"],
+            rating: 4.0,
+            deliveryTime: "20-30 mins",
+            deliveryFee: 0.08,
+            minimumOrder: 0.6,
+            location: {
+              latitude: 40.7128,
+              longitude: -74.006,
+              address: "123 Main St, New York, NY 10001",
+              city: "New York",
+              zipCode: "10001",
+            },
+            isOpen: true,
+            imageUrl: "https://example.com/mcdonalds-fallback.jpg",
+          },
+        ];
+      }
 
       const response: RestaurantSearchResponse = {
         restaurants: filteredRestaurants,

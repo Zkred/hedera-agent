@@ -96,6 +96,8 @@ export interface Order {
   deliveryAddress: Location;
   paymentMethod: string;
   specialInstructions?: string;
+  partnerRestaurant?: string;
+  partnerOrderId?: string;
 }
 
 export enum OrderStatus {
@@ -150,6 +152,8 @@ export interface OrderResponse {
   order: Order;
   success: boolean;
   message: string;
+  payment?: any;
+  partnerOrderId?: string;
 }
 
 export interface OrderStatusRequest {

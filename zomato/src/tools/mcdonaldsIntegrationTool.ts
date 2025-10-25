@@ -11,7 +11,7 @@ import { SimpleA2AClient } from "../simpleA2AClient";
 export const mcdonaldsIntegrationTool = tool(
   async (args: { message: string }): Promise<string> => {
     try {
-      // McDonald's agent typically runs on port 3001
+      // McDonald's agent runs on port 3002
       const mcdonaldsClient = new SimpleA2AClient("http://localhost:3002");
 
       console.log(`🍟 Sending message to McDonald's agent: ${args.message}`);
@@ -32,10 +32,32 @@ export const mcdonaldsIntegrationTool = tool(
 
       console.log(`🍟 McDonald's agent response: ${response}`);
 
+      // Extract order ID from response if it contains order information
+      let orderId = null;
+      try {
+        const responseObj = JSON.parse(response as string);
+        if (responseObj.orderId) {
+          orderId = responseObj.orderId;
+        } else if (responseObj.order && responseObj.order.id) {
+          orderId = responseObj.order.id;
+        }
+      } catch (e) {
+        // If response is not JSON, try to extract order ID from text
+        if (typeof response === "string") {
+          const orderIdMatch = response.match(
+            /order[_-]?id[:\s]*([a-zA-Z0-9_-]+)/i
+          );
+          if (orderIdMatch) {
+            orderId = orderIdMatch[1];
+          }
+        }
+      }
+
       return JSON.stringify({
         success: true,
         response: response,
         agent: "McDonald's",
+        orderId: orderId,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
@@ -78,12 +100,12 @@ Would you like to know more about any specific items or place an order?`;
   {
     name: "mcdonalds_integration",
     description:
-      "Communicate with McDonald's agent for fast food orders, combo meals, drive-thru reservations, and McDelivery rewards. Use this when users mention McDonald's, Big Mac, fries, drive-thru, or McDelivery.",
+      "Communicate with McDonald's agent for menu information, combo meals, drive-thru availability, and McDelivery rewards. This tool gets information from McDonald's but does NOT place orders - use Zomato's order system instead.",
     schema: z.object({
       message: z
         .string()
         .describe(
-          "The message to send to McDonald's agent. Should be a natural language request for McDonald's services like 'I want to order a Big Mac combo' or 'Check drive-thru availability'"
+          "The message to send to McDonald's agent. Should be a natural language request for McDonald's services like 'Show me Big Mac combo options' or 'Check drive-thru availability'"
         ),
     }),
   }

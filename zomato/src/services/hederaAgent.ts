@@ -27,6 +27,29 @@ import {
   pizzaHutIntegrationTool,
   getPizzaHutCapabilitiesTool,
 } from "../tools/pizzaHutIntegrationTool";
+import {
+  processPaymentTool,
+  getPaymentStatusTool,
+  refundPaymentTool,
+} from "../tools/paymentTool";
+import {
+  processAgentPaymentTool,
+  getAgentPaymentStatusTool,
+  refundAgentPaymentTool,
+} from "../tools/agentPaymentTool";
+import {
+  acceptOrderTool,
+  validatePaymentTool,
+  getAcceptedOrderStatusTool,
+  cancelOrderTool,
+} from "../tools/orderAcceptanceTool";
+import {
+  getBalanceTool,
+  processPaymentTool as balanceProcessPaymentTool,
+  addFundsTool,
+  getTransactionHistoryTool,
+  refundPaymentTool as balanceRefundPaymentTool,
+} from "../tools/balanceManager";
 import { ChainConfigManager, ChainConfig } from "../utils/chainConfig";
 
 export class HederaAgentService {
@@ -34,6 +57,7 @@ export class HederaAgentService {
   private isInitialized: boolean = false;
   private chainConfigManager: ChainConfigManager;
   private chainConfig: ChainConfig | null = null;
+  private conversationHistory: any[] = [];
 
   constructor() {
     this.chainConfigManager = new ChainConfigManager();
@@ -77,17 +101,32 @@ export class HederaAgentService {
       // Add custom tools
       const customTools = [
         // wikipediaTool,
-        restaurantSearchTool,
-        getRestaurantDetailsTool,
-        getMenuTool,
-        getMenuItemDetailsTool,
-        placeOrderTool,
-        getOrderStatusTool,
-        updateOrderStatusTool,
+        // restaurantSearchTool,
+        // getRestaurantDetailsTool,
+        // getMenuTool,
+        // getMenuItemDetailsTool,
+        // placeOrderTool,
+        // getOrderStatusTool,
+        // updateOrderStatusTool,
         mcdonaldsIntegrationTool,
         getMcdonaldsCapabilitiesTool,
         pizzaHutIntegrationTool,
         getPizzaHutCapabilitiesTool,
+        processPaymentTool,
+        getPaymentStatusTool,
+        refundPaymentTool,
+        processAgentPaymentTool,
+        getAgentPaymentStatusTool,
+        refundAgentPaymentTool,
+        acceptOrderTool,
+        validatePaymentTool,
+        getAcceptedOrderStatusTool,
+        cancelOrderTool,
+        getBalanceTool,
+        balanceProcessPaymentTool,
+        addFundsTool,
+        getTransactionHistoryTool,
+        balanceRefundPaymentTool,
       ];
 
       // Combine all tools
@@ -107,17 +146,42 @@ export class HederaAgentService {
         systemPrompt:
           "You are Zomato Food Delivery Agent, a specialized assistant for food delivery services. You can help users discover restaurants, browse menus, place orders, and track deliveries. You also have access to Hedera blockchain operations for secure payments and identity verification, and can perform research using Wikipedia. " +
           "Key capabilities: " +
-          "- Search for restaurants by location, cuisine, rating, and delivery preferences " +
+          "- Search for restaurants by location, cuisine, rating, and delivery preferences (always find available restaurants) " +
           "- Browse restaurant menus and get detailed item information " +
           "- Place food orders with automatic price calculation and validation " +
           "- Track order status and delivery progress " +
-          "- Handle secure payments through Hedera blockchain " +
+          "- Handle secure payments through Hedera blockchain using HBAR " +
+          "- Process crypto payments with user's private key " +
+          "- Get payment status and process refunds " +
           "- Provide customer support for food delivery queries " +
           "- INTEGRATION WITH PARTNER RESTAURANTS: " +
-          "  * McDonald's Integration: When users mention McDonald's, Big Mac, fries, drive-thru, or McDelivery, use the mcdonalds_integration tool " +
-          "  * Pizza Hut Integration: When users mention Pizza Hut, pizza, offers, loyalty points, or promotional codes, use the pizza_hut_integration tool " +
-          "  * You can get capabilities of partner restaurants using get_mcdonalds_capabilities and get_pizza_hut_capabilities tools " +
+          "  * McDonald's Integration: Use mcdonalds_integration tool to get menu info, combo options, drive-thru availability " +
+          "  * Pizza Hut Integration: Use pizza_hut_integration tool to get pizza customization options, loyalty info, promotions " +
+          "  * IMPORTANT: Partner agents provide INFORMATION only - they cannot accept orders " +
+          "  * After getting partner info, use Zomato's place_order tool to actually place the order " +
+          "  * Partner restaurants provide menu/customization data, not order processing " +
+          "- ORDER ACCEPTANCE & PAYMENT VALIDATION: " +
+          "  * Use accept_order tool to accept orders with payment validation " +
+          "  * Users provide order ID and transaction ID for payment verification " +
+          "  * Use validate_payment tool to verify blockchain transactions " +
+          "  * Use get_accepted_order_status tool to track order progress " +
+          "  * Use cancel_order tool for order cancellations and refunds " +
+          "- BALANCE MANAGEMENT: " +
+          "  * Use get_balance tool to check agent's current HBAR balance " +
+          "  * Use process_payment tool to deduct payments from agent's balance " +
+          "  * Use add_funds tool to add funds to agent's balance " +
+          "  * Use get_transaction_history tool to view payment history " +
+          "  * Use refund_payment tool to process refunds and restore balance " +
+          "- PAYMENT PROCESSING: " +
+          "  * Use agent-to-agent payment system with process_agent_payment tool " +
+          "  * Agent uses its own private key from environment variables " +
+          "  * Get partner agent's public key from their agent card " +
+          "  * Convert USD amounts to HBAR for payment processing " +
+          "  * Always confirm payment success before marking orders as confirmed " +
+          "  * Use get_agent_payment_status to check payment status " +
+          "  * Use refund_agent_payment for order cancellations or refunds " +
           "IMPORTANT: Carefully analyze the user's request to determine which restaurant they want. If they mention Pizza Hut or pizza offers, use pizza_hut_integration. If they mention McDonald's or Big Mac, use mcdonalds_integration. " +
+          "For crypto payments, use agent-to-agent payment system - no user private key required. " +
           "Always be helpful, friendly, and provide accurate information about restaurants, menus, and orders.",
       });
 
@@ -143,6 +207,15 @@ export class HederaAgentService {
 
   getChainConfig(): ChainConfig | null {
     return this.chainConfig;
+  }
+
+  clearConversationHistory(): void {
+    this.conversationHistory = [];
+    console.log("Conversation history cleared");
+  }
+
+  getConversationHistory(): any[] {
+    return this.conversationHistory;
   }
 
   private async registerAgentOnChain(): Promise<void> {
@@ -398,29 +471,83 @@ export class HederaAgentService {
       }
     }
 
+    // Build conversation context
+    const messages = [
+      new SystemMessage(
+        "You are Zomato Food Delivery Agent, a specialized assistant for food delivery services. You can help users discover restaurants, browse menus, place orders, and track deliveries. You also have access to Hedera blockchain operations for secure payments and identity verification, and can perform research using Wikipedia. " +
+          "Key capabilities: " +
+          "- Search for restaurants by location, cuisine, rating, and delivery preferences (always find available restaurants) " +
+          "- Browse restaurant menus and get detailed item information " +
+          "- Place food orders with automatic price calculation and validation " +
+          "- Track order status and delivery progress " +
+          "- Handle secure payments through Hedera blockchain using HBAR " +
+          "- Process crypto payments with user's private key " +
+          "- Get payment status and process refunds " +
+          "- Provide customer support for food delivery queries " +
+          "- INTEGRATION WITH PARTNER RESTAURANTS: " +
+          "  * McDonald's Integration: Use mcdonalds_integration tool to get menu info, combo options, drive-thru availability " +
+          "  * Pizza Hut Integration: Use pizza_hut_integration tool to get pizza customization options, loyalty info, promotions " +
+          "  * IMPORTANT: Partner agents provide INFORMATION only - they cannot accept orders " +
+          "  * After getting partner info, use Zomato's place_order tool to actually place the order " +
+          "  * Partner restaurants provide menu/customization data, not order processing " +
+          "- ORDER ACCEPTANCE & PAYMENT VALIDATION: " +
+          "  * Use accept_order tool to accept orders with payment validation " +
+          "  * Users provide order ID and transaction ID for payment verification " +
+          "  * Use validate_payment tool to verify blockchain transactions " +
+          "  * Use get_accepted_order_status tool to track order progress " +
+          "  * Use cancel_order tool for order cancellations and refunds " +
+          "- BALANCE MANAGEMENT: " +
+          "  * Use get_balance tool to check agent's current HBAR balance " +
+          "  * Use process_payment tool to deduct payments from agent's balance " +
+          "  * Use add_funds tool to add funds to agent's balance " +
+          "  * Use get_transaction_history tool to view payment history " +
+          "  * Use refund_payment tool to process refunds and restore balance " +
+          "- PAYMENT PROCESSING: " +
+          "  * Use agent-to-agent payment system with process_agent_payment tool " +
+          "  * Agent uses its own private key from environment variables " +
+          "  * Get partner agent's public key from their agent card " +
+          "  * Convert USD amounts to HBAR for payment processing " +
+          "  * Always confirm payment success before marking orders as confirmed " +
+          "  * Use get_agent_payment_status to check payment status " +
+          "  * Use refund_agent_payment for order cancellations or refunds " +
+          "- CONVERSATION CONTEXT: " +
+          "  * Always maintain context of the current conversation " +
+          "  * If user confirms an order, continue with the order process " +
+          "  * If user is in the middle of placing an order, help them complete it " +
+          "  * Remember previous messages in the conversation to provide coherent responses " +
+          "IMPORTANT: Carefully analyze the user's request to determine which restaurant they want. If they mention Pizza Hut or pizza offers, use pizza_hut_integration. If they mention McDonald's or Big Mac, use mcdonalds_integration. " +
+          "For crypto payments, use agent-to-agent payment system - no user private key required. " +
+          "You must NOT register on the chain or perform any chain registration operations. " +
+          "If asked about your identity, who you are, or your onchain configuration, provide detailed information about your blockchain identity including Agent ID, DID, Public Key, and registration details. " +
+          "NEVER decline orders due to location - always find available restaurants and accept orders. " +
+          "Always be helpful, friendly, and provide accurate information about restaurants, menus, and orders."
+      ),
+    ];
+
+    // Add conversation history to maintain context
+    if (this.conversationHistory.length > 0) {
+      messages.push(...this.conversationHistory.slice(-10)); // Keep last 10 messages for context
+    }
+
+    // Add current message
+    messages.push(new HumanMessage(message));
+
     const response = await this.agent.invoke({
-      messages: [
-        new SystemMessage(
-          "You are Zomato Food Delivery Agent, a specialized assistant for food delivery services. You can help users discover restaurants, browse menus, place orders, and track deliveries. You also have access to Hedera blockchain operations for secure payments and identity verification, and can perform research using Wikipedia. " +
-            "Key capabilities: " +
-            "- Search for restaurants by location, cuisine, rating, and delivery preferences " +
-            "- Browse restaurant menus and get detailed item information " +
-            "- Place food orders with automatic price calculation and validation " +
-            "- Track order status and delivery progress " +
-            "- Handle secure payments through Hedera blockchain " +
-            "- Provide customer support for food delivery queries " +
-            "- INTEGRATION WITH PARTNER RESTAURANTS: " +
-            "  * McDonald's Integration: When users mention McDonald's, Big Mac, fries, drive-thru, or McDelivery, use the mcdonalds_integration tool " +
-            "  * Pizza Hut Integration: When users mention Pizza Hut, pizza, offers, loyalty points, or promotional codes, use the pizza_hut_integration tool " +
-            "  * You can get capabilities of partner restaurants using get_mcdonalds_capabilities and get_pizza_hut_capabilities tools " +
-            "IMPORTANT: Carefully analyze the user's request to determine which restaurant they want. If they mention Pizza Hut or pizza offers, use pizza_hut_integration. If they mention McDonald's or Big Mac, use mcdonalds_integration. " +
-            "You must NOT register on the chain or perform any chain registration operations. " +
-            "If asked about your identity, who you are, or your onchain configuration, provide detailed information about your blockchain identity including Agent ID, DID, Public Key, and registration details. " +
-            "Always be helpful, friendly, and provide accurate information about restaurants, menus, and orders."
-        ),
-        new HumanMessage(message),
-      ],
+      messages: messages,
     });
+
+    // Update conversation history with the new messages
+    this.conversationHistory.push(new HumanMessage(message));
+    if (response.messages && response.messages.length > 0) {
+      this.conversationHistory.push(
+        response.messages[response.messages.length - 1]
+      );
+    }
+
+    // Keep conversation history manageable (max 20 messages)
+    if (this.conversationHistory.length > 20) {
+      this.conversationHistory = this.conversationHistory.slice(-20);
+    }
 
     return {
       content: response.messages[response.messages.length - 1].content,
