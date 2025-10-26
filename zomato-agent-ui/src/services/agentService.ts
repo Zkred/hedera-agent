@@ -1,6 +1,6 @@
 // import { Message } from "../types/chat";
 
-const AGENT_URL = process.env.REACT_APP_AGENT_URL || "http://localhost:3000";
+const AGENT_URL = process.env.REACT_APP_AGENT_URL || "http://localhost:3003";
 
 export class AgentService {
   private sessionId: string;

@@ -1,9 +1,9 @@
 {
-  "agentId": "1",
+  "agentId": "4",
   "chainId": 296,
   "description": "Zomato Food Delivery Agent",
-  "serviceEndpoint": "http://localhost:3000/",
-  "publicKey": "0x2aa5c33FE8b389707c753AE2DdD0d613aC226C34",
-  "registeredAt": "2025-10-25T18:06:51.587Z",
-  "did": "did:iden3:privado:main:CW3RbmkdMNjifJExsfKxqXY8UKH8kuMsG9XcMYn4Yx"
+  "serviceEndpoint": "https://localhost:3003",
+  "publicKey": "0x36E4ab1Db83C11586100BdC5969B7ed5e8a0cE82",
+  "registeredAt": "2025-10-26T13:42:25.639Z",
+  "did": "did:iden3:privado:main:CW3RbmkdMNjiid1dwL1Fo1wtLsGmw4sT6gMknFWgPt"
 }
