@@ -1,0 +1,9 @@
+{
+  "agentId": "2",
+  "chainId": 296,
+  "description": "Pizza Hut Delivery Agent",
+  "serviceEndpoint": "http://localhost:3001/",
+  "publicKey": "0xC5Bb8fB82293cB44542E179C0F4112EADf41568E",
+  "registeredAt": "2025-10-27T01:40:44.008Z",
+  "did": "did:iden3:privado:main:CW3RbmkdMNjjPPZqX5rZa6fveFhHL65hSKNNQkkE7R"
+}
