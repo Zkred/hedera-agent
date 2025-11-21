@@ -1,0 +1,9 @@
+{
+  "agentId": "1",
+  "chainId": 296,
+  "description": "McDonald's Delivery Agent",
+  "serviceEndpoint": "http://localhost:3002/",
+  "publicKey": "0x6707252B0BAb7cFBF8FE57AD9D85d32DbDa9879d",
+  "registeredAt": "2025-10-27T01:40:37.340Z",
+  "did": "did:iden3:privado:main:CW3RbmkdMNjiwgjsrrLz6fAZGn7JahWwtiTuUBn9Lj"
+}
